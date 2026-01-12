@@ -1,0 +1,4410 @@
+<!doctype html>
+<html lang="tr" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Akkoç Lojistik Dijital Sensörlü Lastik Formu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./mobile.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;display=swap"
+    rel="stylesheet">
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- PDF Generation Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* Light Theme */
+    :root[data-theme="light"] {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-sidebar: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --accent-blue: #0066cc;
+      --accent-orange: #ff6b00;
+      --shadow: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Dark Theme */
+    :root[data-theme="dark"] {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-sidebar: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --border-color: #334155;
+      --accent-blue: #3b82f6;
+      --accent-orange: #f97316;
+      --shadow: rgba(0, 0, 0, 0.3);
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      left: -320px;
+      top: 0;
+      width: 320px;
+      height: 100%;
+      background: var(--bg-sidebar);
+      box-shadow: 2px 0 20px var(--shadow);
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .sidebar.open {
+      left: 0;
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 999;
+    }
+
+    .sidebar-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 24px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+
+    .menu-item:hover {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border-left-color: var(--accent-orange);
+    }
+
+    .menu-item.active {
+      background: var(--bg-primary);
+      color: var(--accent-orange);
+      border-left-color: var(--accent-orange);
+      font-weight: 600;
+    }
+
+    .menu-icon {
+      width: 24px;
+      height: 24px;
+      font-size: 20px;
+    }
+
+    /* Home Screen */
+    .home-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100%;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .logo-container {
+      width: 200px;
+      height: 200px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 20px var(--shadow);
+    }
+
+    .logo-container img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .welcome-text {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-orange));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle-text {
+      color: var(--text-secondary);
+      font-size: 16px;
+      margin-bottom: 48px;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .action-card {
+      background: var(--bg-secondary);
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px var(--shadow);
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+    }
+
+    .action-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px var(--shadow);
+      border-color: var(--accent-orange);
+    }
+
+    .action-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .action-title {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    /* Content Sections */
+    .content-section {
+      display: none;
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    /* Form Styles */
+    .form-card {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-primary);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-orange));
+      color: white;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--shadow);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      background: var(--border-color);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .toggle-switch.active {
+      background: var(--accent-orange);
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(24px);
+    }
+
+    /* Profile Section */
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid var(--accent-orange);
+      cursor: pointer;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #ef4444;
+      color: white;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Records List */
+    .record-card {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .record-card:hover {
+      border-color: var(--accent-orange);
+      transform: translateX(4px);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 16px 24px;
+      border-radius: 12px;
+      color: white;
+      font-weight: 500;
+      z-index: 9999;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 8px 24px var(--shadow);
+    }
+
+    .toast.success {
+      background: #10b981;
+    }
+
+    .toast.error {
+      background: #ef4444;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Login Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 60px var(--shadow);
+    }
+
+    /* Top Bar */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: var(--bg-secondary);
+      box-shadow: 0 2px 8px var(--shadow);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 100;
+    }
+
+    .menu-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .menu-btn:hover {
+      background: var(--accent-orange);
+      color: white;
+    }
+
+    .main-content {
+      margin-top: 64px;
+      min-height: calc(100% - 64px);
+    }
+
+    /* Signature Canvas */
+    .signature-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    #signatureCanvas {
+      border: 3px dashed var(--accent-blue);
+      border-radius: 12px;
+      width: 100%;
+      height: 300px;
+      background: white;
+      touch-action: none;
+      cursor: crosshair;
+      display: block;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .signature-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #cbd5e1;
+      font-size: 18px;
+      font-weight: 500;
+      pointer-events: none;
+      text-align: center;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .detail-item {
+      padding: 12px;
+      background: var(--bg-primary);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-orange);
+    }
+
+    .detail-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .detail-value {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    /* Photo Styles */
+    .photo-section {
+      margin-top: 24px;
+    }
+
+    .photo-buttons {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .photo-btn {
+      flex: 1;
+      min-width: 150px;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .photo-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--shadow);
+    }
+
+    .photo-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .photo-item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px var(--shadow);
+      cursor: pointer;
+      transition: all 0.3s;
+      background: var(--bg-primary);
+    }
+
+    .photo-item:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 24px var(--shadow);
+    }
+
+    .photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .photo-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 32px;
+      height: 32px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 10;
+    }
+
+    .photo-item:hover .photo-delete {
+      opacity: 1;
+    }
+
+    .photo-delete:hover {
+      background: #dc2626;
+      transform: scale(1.1);
+    }
+
+    .photo-date {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+      color: white;
+      padding: 8px;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .photo-preview-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      backdrop-filter: blur(8px);
+    }
+
+    .photo-preview-content {
+      max-width: 90%;
+      max-height: 90%;
+      position: relative;
+    }
+
+    .photo-preview-content img {
+      max-width: 100%;
+      max-height: 90vh;
+      border-radius: 8px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .photo-preview-close {
+      position: absolute;
+      top: -50px;
+      right: 0;
+      background: #ef4444;
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .photo-preview-close:hover {
+      background: #dc2626;
+      transform: scale(1.1);
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+  <style>
+    @view-transition {
+      navigation: auto;
+    }
+  </style>
+  <!-- PWA ve Mobile Eklemeleri -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./mobile.css">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" type="image/png"
+    href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&s">
+  <link rel="apple-touch-icon"
+    href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&s">
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="h-full">
+
+  <!-- Hidden file inputs -->
+  <input type="file" id="fileInput" accept="image/*" style="display: none;">
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="text-center mb-6">
+        <div class="logo-container mx-auto mb-4" style="width: 150px; height: 150px;">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&amp;s"
+            alt="Akkoç Lojistik">
+        </div>
+        <h2 class="text-3xl font-bold mb-2">Akkoç Lojistik</h2>
+        <p class="text-sm" style="color: var(--text-secondary)">Dijital Sensörlü Lastik Formu</p>
+      </div>
+      <div id="loginForm">
+        <label class="form-label">E-posta</label>
+        <input type="email" id="loginEmail" class="form-input mb-4" placeholder="email@example.com">
+        <label class="form-label">Şifre</label>
+        <input type="password" id="loginPassword" class="form-input mb-4" placeholder="Şifrenizi girin">
+        <button onclick="checkLogin()" class="btn-primary w-full mb-3"> 🔐 Giriş Yap </button>
+        <div class="text-center mt-3">
+          <button onclick="showForgotPassword()" class="text-sm"
+            style="color: var(--accent-orange); background: none; border: none; cursor: pointer; text-decoration: underline;">
+            🔑 Şifremi Unuttum </button>
+        </div>
+        <div class="text-right"
+          style="text-align: right; margin-top: 15px; font-size: 10px; color: var(--text-secondary); opacity: 0.6; font-weight: 500;">
+          Mustafa Kartın
+        </div>
+      </div>
+      <div id="forgotPasswordForm" style="display: none;">
+        <h3 class="text-xl font-bold mb-4 text-center">🔑 Şifremi Unuttum</h3>
+        <p class="text-sm mb-4" style="color: var(--text-secondary)">E-posta adresinizi girin, şifrenizi sıfırlayalım.
+        </p>
+        <label class="form-label">E-posta</label>
+        <input type="email" id="resetEmail" class="form-input mb-4" placeholder="email@example.com">
+        <div class="flex gap-3">
+          <button onclick="resetPassword()" class="btn-primary flex-1"> 📧 Şifremi Sıfırla </button>
+          <button onclick="backToLogin()" class="btn-primary flex-1" style="background: #64748b;"> ⬅️ Geri </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo Preview Modal -->
+  <div id="photoPreviewModal" class="photo-preview-modal hidden" onclick="closePhotoPreview()">
+    <div class="photo-preview-content" onclick="event.stopPropagation()">
+      <button class="photo-preview-close" onclick="closePhotoPreview()">×</button>
+      <img id="photoPreviewImage" src="" alt="Preview">
+    </div>
+  </div>
+
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="p-6 border-b" style="border-color: var(--border-color)">
+      <div class="flex items-center gap-4">
+        <img id="sidebarAvatar"
+          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&amp;s"
+          class="profile-avatar">
+        <div>
+          <div class="font-bold text-lg">Kullanıcı</div>
+          <div class="text-sm" style="color: var(--text-secondary)" id="sidebarEmail">email@example.com</div>
+        </div>
+      </div>
+    </div>
+    <div class="py-4">
+      <div class="menu-item" onclick="showSection('home')">
+        <span class="menu-icon">🏠</span>
+        <span>Ana Sayfa</span>
+      </div>
+      <div class="menu-item" onclick="showSection('newRecord')">
+        <span class="menu-icon">➕</span>
+        <span>Yeni Kayıt Oluştur</span>
+      </div>
+      <div class="menu-item" onclick="showSection('reports')">
+        <span class="menu-icon">📈</span>
+        <span>Raporlar & Analiz</span>
+      </div>
+      <div class="menu-item" onclick="showSection('history')">
+        <span class="menu-icon">📋</span>
+        <span>Geçmiş Kayıtlar</span>
+      </div>
+      <div class="menu-item" onclick="showSection('vehicles')">
+        <span class="menu-icon">🚛</span>
+        <span>Kayıtlı Araçlar</span>
+      </div>
+      <div class="menu-item" onclick="showSection('users')">
+        <span class="menu-icon">👥</span>
+        <span>Kullanıcı Yönetimi</span>
+      </div>
+      <div class="menu-item" onclick="showSection('trash')">
+        <span class="menu-icon">🗑️</span>
+        <span>Çöp Kutusu</span>
+      </div>
+      <div class="menu-item" onclick="showSection('profile')">
+        <span class="menu-icon">👤</span>
+        <span>Profil</span>
+      </div>
+      <div class="menu-item" onclick="showSection('notifications')">
+        <div class="relative">
+          <span class="menu-icon">🔔</span>
+          <span class="notification-badge" id="notifBadge">3</span>
+        </div>
+        <span>Bildirimler</span>
+      </div>
+      <div class="menu-item" onclick="showSection('settings')">
+        <span class="menu-icon">⚙️</span>
+        <span>Ayarlar</span>
+      </div>
+    </div>
+
+
+
+  </div>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <button class="menu-btn" onclick="toggleSidebar()">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+    <div class="ml-4" id="logoContainer">
+      <img id="topLogo"
+        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&amp;s"
+        style="max-height: 40px; max-width: 150px; object-fit: contain;">
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Home Section -->
+    <div id="homeSection" class="content-section">
+      <div class="home-screen">
+        <div class="logo-container">
+          <img id="homeLogo"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&amp;s"
+            alt="Logo">
+        </div>
+        <h1 class="welcome-text">Akkoç Lojistik'e Hoş Geldiniz</h1>
+        <p class="subtitle-text">Dijital Sensörlü Lastik Formu</p>
+        <div class="quick-actions">
+          <div class="action-card" onclick="showSection('newRecord')">
+            <div class="action-icon">➕</div>
+            <div class="action-title">Yeni Kayıt</div>
+          </div>
+          <div class="action-card" onclick="showSection('history')">
+            <div class="action-icon">📋</div>
+            <div class="action-title">Geçmiş</div>
+          </div>
+          <div class="action-card" onclick="showSection('vehicles')">
+            <div class="action-icon">🚛</div>
+            <div class="action-title">Araçlar</div>
+          </div>
+          <div class="action-card" onclick="showSection('settings')">
+            <div class="action-icon">⚙️</div>
+            <div class="action-title">Ayarlar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- New Record Section -->
+    <div id="newRecordSection" class="content-section">
+      <div class="section-header">
+        <span style="font-size: 32px">➕</span>
+        <h2 class="section-title">Yeni Kayıt Oluştur</h2>
+      </div>
+
+      <div class="form-card">
+        <h3 class="font-semibold text-lg mb-4" style="color: var(--accent-orange)">Araç Tipi</h3>
+        <div class="flex gap-4 mb-6">
+          <button id="vehicleTypeKamyon" onclick="selectVehicleType('kamyon')" class="btn-primary flex-1"
+            style="padding: 16px; font-size: 16px;"> 🚛 Kamyon </button>
+          <button id="vehicleTypeCekici" onclick="selectVehicleType('cekici')" class="btn-primary flex-1"
+            style="padding: 16px; font-size: 16px; background: #64748b;"> 🚚 Çekici + Dorse </button>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h3 class="font-semibold text-lg mb-4" style="color: var(--accent-orange)">Sürücü Bilgileri</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="form-label">Sürücü Adı</label>
+            <input type="text" id="surucuAdi" class="form-input" placeholder="Ad Soyad">
+          </div>
+          <div>
+            <label class="form-label">Tarih</label>
+            <input type="date" id="tarih" class="form-input">
+          </div>
+        </div>
+
+        <!-- Kamyon Plaka -->
+        <div id="kamyonPlaka" class="grid grid-cols-1 gap-4">
+          <div>
+            <label class="form-label">🚛 Kamyon Plakası</label>
+            <input type="text" id="plaka1" class="form-input" placeholder="06 ABC 123">
+          </div>
+        </div>
+
+        <!-- Çekici + Dorse Plakalar -->
+        <div id="cekiciPlaka" class="grid grid-cols-1 md:grid-cols-2 gap-4" style="display: none;">
+          <div>
+            <label class="form-label">🚚 Çekici Plakası</label>
+            <input type="text" id="plakaCekici" class="form-input" placeholder="06 ABC 123">
+          </div>
+          <div>
+            <label class="form-label">🚛 Dorse Plakası</label>
+            <input type="text" id="plakaDorse" class="form-input" placeholder="34 XYZ 789">
+          </div>
+        </div>
+      </div>
+
+      <!-- Kamyon Lastik Bilgileri -->
+      <div id="kamyonTireInfo" class="form-card">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="font-semibold text-xl" style="color: #3b82f6">🚛 KAMYON LASTİK BİLGİLERİ</h3>
+          <div class="flex gap-2">
+            <button type="button" onclick="toggleAllDingils('kamyonTireInfo', true)" class="btn-primary"
+              style="padding: 6px 12px; font-size: 11px; background: #3b82f6; border-radius: 8px;">Hepsini Aç</button>
+            <button type="button" onclick="toggleAllDingils('kamyonTireInfo', false)" class="btn-primary"
+              style="padding: 6px 12px; font-size: 11px; background: #64748b; border-radius: 8px;">Hepsini
+              Kapat</button>
+          </div>
+        </div>
+
+        <!-- ÖN DİNGİL -->
+        <div class="mb-8 p-5 rounded-xl"
+          style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1)); border: 3px solid #3b82f6;">
+          <div class="flex justify-between items-center mb-5 cursor-pointer select-none"
+            style="border-bottom: 2px solid #3b82f6; padding-bottom: 8px;" onclick="toggleDingil(this)">
+            <h4 class="font-bold text-lg" style="color: #3b82f6; margin-bottom: 0;">📍 ÖN DİNGİL</h4>
+            <span class="toggle-icon text-xl">🔼</span>
+          </div>
+          <div class="dingil-content grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <!-- Sol Ön -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #10b981;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">◀️ SOL ÖN</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('kamyon_sol_on', 'yeni')" id="kamyon_sol_on_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('kamyon_sol_on', 'cikma')" id="kamyon_sol_on_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Marka</label>
+                  <input type="text" id="kamyon_sol_on_marka" class="form-input" placeholder="Marka">
+                </div>
+                <div>
+                  <label class="form-label">KM</label>
+                  <input type="number" id="kamyon_sol_on_km" class="form-input" placeholder="0">
+                </div>
+                <div>
+                  <label class="form-label">Takılma Tarihi</label>
+                  <input type="date" id="kamyon_sol_on_tarih" class="form-input">
+                </div>
+                <div>
+                  <label class="form-label">Ebat</label>
+                  <input type="text" id="kamyon_sol_on_ebat" class="form-input" placeholder="Ebat">
+                </div>
+                <div>
+                  <label class="form-label">Seri No</label>
+                  <input type="text" id="kamyon_sol_on_seri" class="form-input" placeholder="Seri No">
+                </div>
+                <div>
+                  <label class="form-label">Sensör</label>
+                  <input type="text" id="kamyon_sol_on_sensor" class="form-input" placeholder="Sensör Bilgisi">
+                </div>
+              </div>
+            </div>
+
+            <!-- Sağ Ön -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #3b82f6;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">▶️ SAĞ ÖN</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('kamyon_sag_on', 'yeni')" id="kamyon_sag_on_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('kamyon_sag_on', 'cikma')" id="kamyon_sag_on_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Marka</label>
+                  <input type="text" id="kamyon_sag_on_marka" class="form-input" placeholder="Marka">
+                </div>
+                <div>
+                  <label class="form-label">KM</label>
+                  <input type="number" id="kamyon_sag_on_km" class="form-input" placeholder="0">
+                </div>
+                <div>
+                  <label class="form-label">Takılma Tarihi</label>
+                  <input type="date" id="kamyon_sag_on_tarih" class="form-input">
+                </div>
+                <div>
+                  <label class="form-label">Ebat</label>
+                  <input type="text" id="kamyon_sag_on_ebat" class="form-input" placeholder="Ebat">
+                </div>
+                <div>
+                  <label class="form-label">Seri No</label>
+                  <input type="text" id="kamyon_sag_on_seri" class="form-input" placeholder="Seri No">
+                </div>
+                <div>
+                  <label class="form-label">Sensör</label>
+                  <input type="text" id="kamyon_sag_on_sensor" class="form-input" placeholder="Sensör Bilgisi">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ORTA DİNGİL -->
+        <div class="mb-8 p-5 rounded-xl"
+          style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1)); border: 3px solid #f59e0b;">
+          <div class="flex justify-between items-center mb-5 cursor-pointer select-none"
+            style="border-bottom: 2px solid #f59e0b; padding-bottom: 8px;" onclick="toggleDingil(this)">
+            <h4 class="font-bold text-lg" style="color: #f59e0b; margin-bottom: 0;">⚙️ ORTA DİNGİL</h4>
+            <span class="toggle-icon text-xl">🔼</span>
+          </div>
+          <div class="dingil-content grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <!-- Sol Orta Dış -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #10b981;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">◀️ SOL ORTA DIŞ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('kamyon_sol_orta_dis', 'yeni')"
+                      id="kamyon_sol_orta_dis_yeni" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('kamyon_sol_orta_dis', 'cikma')"
+                      id="kamyon_sol_orta_dis_cikma" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Marka</label>
+                  <input type="text" id="kamyon_sol_orta_dis_marka" class="form-input" placeholder="Marka">
+                </div>
+                <div>
+                  <label class="form-label">KM</label>
+                  <input type="number" id="kamyon_sol_orta_dis_km" class="form-input" placeholder="0">
+                </div>
+                <div>
+                  <label class="form-label">Takılma Tarihi</label>
+                  <input type="date" id="kamyon_sol_orta_dis_tarih" class="form-input">
+                </div>
+                <div>
+                  <label class="form-label">Ebat</label>
+                  <input type="text" id="kamyon_sol_orta_dis_ebat" class="form-input" placeholder="Ebat">
+                </div>
+                <div>
+                  <label class="form-label">Seri No</label>
+                  <input type="text" id="kamyon_sol_orta_dis_seri" class="form-input" placeholder="Seri No">
+                </div>
+                <div>
+                  <label class="form-label">Sensör</label>
+                  <input type="text" id="kamyon_sol_orta_dis_sensor" class="form-input" placeholder="Sensör Bilgisi">
+                </div>
+              </div>
+            </div>
+
+            <!-- Sol Orta İç -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #8b5cf6;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">◀️ SOL ORTA İÇ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('kamyon_sol_orta_ic', 'yeni')"
+                      id="kamyon_sol_orta_ic_yeni" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('kamyon_sol_orta_ic', 'cikma')"
+                      id="kamyon_sol_orta_ic_cikma" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Marka</label>
+                  <input type="text" id="kamyon_sol_orta_ic_marka" class="form-input" placeholder="Marka">
+                </div>
+                <div>
+                  <label class="form-label">KM</label>
+                  <input type="number" id="kamyon_sol_orta_ic_km" class="form-input" placeholder="0">
+                </div>
+                <div>
+                  <label class="form-label">Takılma Tarihi</label>
+                  <input type="date" id="kamyon_sol_orta_ic_tarih" class="form-input">
+                </div>
+                <div>
+                  <label class="form-label">Ebat</label>
+                  <input type="text" id="kamyon_sol_orta_ic_ebat" class="form-input" placeholder="Ebat">
+                </div>
+                <div>
+                  <label class="form-label">Seri No</label>
+                  <input type="text" id="kamyon_sol_orta_ic_seri" class="form-input" placeholder="Seri No">
+                </div>
+                <div>
+                  <label class="form-label">Sensör</label>
+                  <input type="text" id="kamyon_sol_orta_ic_sensor" class="form-input" placeholder="Sensör Bilgisi">
+                </div>
+              </div>
+            </div>
+
+            <!-- Sağ Orta İç -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #ec4899;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">▶️ SAĞ ORTA İÇ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('kamyon_sag_orta_ic', 'yeni')"
+                      id="kamyon_sag_orta_ic_yeni" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('kamyon_sag_orta_ic', 'cikma')"
+                      id="kamyon_sag_orta_ic_cikma" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Marka</label>
+                  <input type="text" id="kamyon_sag_orta_ic_marka" class="form-input" placeholder="Marka">
+                </div>
+                <div>
+                  <label class="form-label">KM</label>
+                  <input type="number" id="kamyon_sag_orta_ic_km" class="form-input" placeholder="0">
+                </div>
+                <div>
+                  <label class="form-label">Takılma Tarihi</label>
+                  <input type="date" id="kamyon_sag_orta_ic_tarih" class="form-input">
+                </div>
+                <div>
+                  <label class="form-label">Ebat</label>
+                  <input type="text" id="kamyon_sag_orta_ic_ebat" class="form-input" placeholder="Ebat">
+                </div>
+                <div>
+                  <label class="form-label">Seri No</label>
+                  <input type="text" id="kamyon_sag_orta_ic_seri" class="form-input" placeholder="Seri No">
+                </div>
+                <div>
+                  <label class="form-label">Sensör</label>
+                  <input type="text" id="kamyon_sag_orta_ic_sensor" class="form-input" placeholder="Sensör Bilgisi">
+                </div>
+              </div>
+            </div>
+
+            <!-- Sağ Orta Dış -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #3b82f6;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">▶️ SAĞ ORTA DIŞ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('kamyon_sag_orta_dis', 'yeni')"
+                      id="kamyon_sag_orta_dis_yeni" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('kamyon_sag_orta_dis', 'cikma')"
+                      id="kamyon_sag_orta_dis_cikma" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Marka</label>
+                  <input type="text" id="kamyon_sag_orta_dis_marka" class="form-input" placeholder="Marka">
+                </div>
+                <div>
+                  <label class="form-label">KM</label>
+                  <input type="number" id="kamyon_sag_orta_dis_km" class="form-input" placeholder="0">
+                </div>
+                <div>
+                  <label class="form-label">Takılma Tarihi</label>
+                  <input type="date" id="kamyon_sag_orta_dis_tarih" class="form-input">
+                </div>
+                <div>
+                  <label class="form-label">Ebat</label>
+                  <input type="text" id="kamyon_sag_orta_dis_ebat" class="form-input" placeholder="Ebat">
+                </div>
+                <div>
+                  <label class="form-label">Seri No</label>
+                  <input type="text" id="kamyon_sag_orta_dis_seri" class="form-input" placeholder="Seri No">
+                </div>
+                <div>
+                  <label class="form-label">Sensör</label>
+                  <input type="text" id="kamyon_sag_orta_dis_sensor" class="form-input" placeholder="Sensör Bilgisi">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ARKA DİNGİL -->
+        <div class="mb-8 p-5 rounded-xl"
+          style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1)); border: 3px solid #8b5cf6;">
+          <div class="flex justify-between items-center mb-5 cursor-pointer select-none"
+            style="border-bottom: 2px solid #8b5cf6; padding-bottom: 8px;" onclick="toggleDingil(this)">
+            <h4 class="font-bold text-lg" style="color: #8b5cf6; margin-bottom: 0;">🔧 ARKA DİNGİL</h4>
+            <span class="toggle-icon text-xl">🔼</span>
+          </div>
+          <div class="dingil-content grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <!-- Sol Arka Dış -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #10b981;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">◀️ SOL ARKA DIŞ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('kamyon_sol_arka_dis', 'yeni')"
+                      id="kamyon_sol_arka_dis_yeni" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('kamyon_sol_arka_dis', 'cikma')"
+                      id="kamyon_sol_arka_dis_cikma" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Marka</label>
+                  <input type="text" id="kamyon_sol_arka_dis_marka" class="form-input" placeholder="Marka">
+                </div>
+                <div>
+                  <label class="form-label">KM</label>
+                  <input type="number" id="kamyon_sol_arka_dis_km" class="form-input" placeholder="0">
+                </div>
+                <div>
+                  <label class="form-label">Takılma Tarihi</label>
+                  <input type="date" id="kamyon_sol_arka_dis_tarih" class="form-input">
+                </div>
+                <div>
+                  <label class="form-label">Ebat</label>
+                  <input type="text" id="kamyon_sol_arka_dis_ebat" class="form-input" placeholder="Ebat">
+                </div>
+                <div>
+                  <label class="form-label">Seri No</label>
+                  <input type="text" id="kamyon_sol_arka_dis_seri" class="form-input" placeholder="Seri No">
+                </div>
+                <div>
+                  <label class="form-label">Sensör</label>
+                  <input type="text" id="kamyon_sol_arka_dis_sensor" class="form-input" placeholder="Sensör Bilgisi">
+                </div>
+              </div>
+            </div>
+
+            <!-- Sol Arka İç -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #8b5cf6;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">◀️ SOL ARKA İÇ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('kamyon_sol_arka_ic', 'yeni')"
+                      id="kamyon_sol_arka_ic_yeni" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('kamyon_sol_arka_ic', 'cikma')"
+                      id="kamyon_sol_arka_ic_cikma" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Marka</label>
+                  <input type="text" id="kamyon_sol_arka_ic_marka" class="form-input" placeholder="Marka">
+                </div>
+                <div>
+                  <label class="form-label">KM</label>
+                  <input type="number" id="kamyon_sol_arka_ic_km" class="form-input" placeholder="0">
+                </div>
+                <div>
+                  <label class="form-label">Takılma Tarihi</label>
+                  <input type="date" id="kamyon_sol_arka_ic_tarih" class="form-input">
+                </div>
+                <div>
+                  <label class="form-label">Ebat</label>
+                  <input type="text" id="kamyon_sol_arka_ic_ebat" class="form-input" placeholder="Ebat">
+                </div>
+                <div>
+                  <label class="form-label">Seri No</label>
+                  <input type="text" id="kamyon_sol_arka_ic_seri" class="form-input" placeholder="Seri No">
+                </div>
+                <div>
+                  <label class="form-label">Sensör</label>
+                  <input type="text" id="kamyon_sol_arka_ic_sensor" class="form-input" placeholder="Sensör Bilgisi">
+                </div>
+              </div>
+            </div>
+
+            <!-- Sağ Arka İç -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #ec4899;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">▶️ SAĞ ARKA İÇ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('kamyon_sag_arka_ic', 'yeni')"
+                      id="kamyon_sag_arka_ic_yeni" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('kamyon_sag_arka_ic', 'cikma')"
+                      id="kamyon_sag_arka_ic_cikma" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Marka</label>
+                  <input type="text" id="kamyon_sag_arka_ic_marka" class="form-input" placeholder="Marka">
+                </div>
+                <div>
+                  <label class="form-label">KM</label>
+                  <input type="number" id="kamyon_sag_arka_ic_km" class="form-input" placeholder="0">
+                </div>
+                <div>
+                  <label class="form-label">Takılma Tarihi</label>
+                  <input type="date" id="kamyon_sag_arka_ic_tarih" class="form-input">
+                </div>
+                <div>
+                  <label class="form-label">Ebat</label>
+                  <input type="text" id="kamyon_sag_arka_ic_ebat" class="form-input" placeholder="Ebat">
+                </div>
+                <div>
+                  <label class="form-label">Seri No</label>
+                  <input type="text" id="kamyon_sag_arka_ic_seri" class="form-input" placeholder="Seri No">
+                </div>
+                <div>
+                  <label class="form-label">Sensör</label>
+                  <input type="text" id="kamyon_sag_arka_ic_sensor" class="form-input" placeholder="Sensör Bilgisi">
+                </div>
+              </div>
+            </div>
+
+            <!-- Sağ Arka Dış -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #3b82f6;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">▶️ SAĞ ARKA DIŞ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('kamyon_sag_arka_dis', 'yeni')"
+                      id="kamyon_sag_arka_dis_yeni" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('kamyon_sag_arka_dis', 'cikma')"
+                      id="kamyon_sag_arka_dis_cikma" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Marka</label>
+                  <input type="text" id="kamyon_sag_arka_dis_marka" class="form-input" placeholder="Marka">
+                </div>
+                <div>
+                  <label class="form-label">KM</label>
+                  <input type="number" id="kamyon_sag_arka_dis_km" class="form-input" placeholder="0">
+                </div>
+                <div>
+                  <label class="form-label">Takılma Tarihi</label>
+                  <input type="date" id="kamyon_sag_arka_dis_tarih" class="form-input">
+                </div>
+                <div>
+                  <label class="form-label">Ebat</label>
+                  <input type="text" id="kamyon_sag_arka_dis_ebat" class="form-input" placeholder="Ebat">
+                </div>
+                <div>
+                  <label class="form-label">Seri No</label>
+                  <input type="text" id="kamyon_sag_arka_dis_seri" class="form-input" placeholder="Seri No">
+                </div>
+                <div>
+                  <label class="form-label">Sensör</label>
+                  <input type="text" id="kamyon_sag_arka_dis_sensor" class="form-input" placeholder="Sensör Bilgisi">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Çekici Lastik Bilgileri -->
+      <div id="cekiciTireInfo" class="form-card" style="display: none;">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="font-semibold text-xl" style="color: #3b82f6">🚚 ÇEKİCİ LASTİK BİLGİLERİ</h3>
+          <div class="flex gap-2">
+            <button type="button" onclick="toggleAllDingils('cekiciTireInfo', true)" class="btn-primary"
+              style="padding: 6px 12px; font-size: 11px; background: #3b82f6; border-radius: 8px;">Hepsini Aç</button>
+            <button type="button" onclick="toggleAllDingils('cekiciTireInfo', false)" class="btn-primary"
+              style="padding: 6px 12px; font-size: 11px; background: #64748b; border-radius: 8px;">Hepsini
+              Kapat</button>
+          </div>
+        </div>
+
+        <!-- ÖN DİNGİL -->
+        <div class="mb-8 p-5 rounded-xl"
+          style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1)); border: 3px solid #3b82f6;">
+          <div class="flex justify-between items-center mb-5 cursor-pointer select-none"
+            style="border-bottom: 2px solid #3b82f6; padding-bottom: 8px;" onclick="toggleDingil(this)">
+            <h4 class="font-bold text-lg" style="color: #3b82f6; margin-bottom: 0;">📍 ÖN DİNGİL</h4>
+            <span class="toggle-icon text-xl">🔼</span>
+          </div>
+          <div class="dingil-content grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <!-- Sol Ön -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #10b981;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">◀️ 1 SOL ÖN</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('cekici_sol_on', 'yeni')" id="cekici_sol_on_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 9px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('cekici_sol_on', 'kaplama')"
+                      id="cekici_sol_on_kaplama" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 9px; background: #64748b;">KAPLAMA</button>
+                    <button type="button" onclick="selectTireStatus('cekici_sol_on', 'cikma')" id="cekici_sol_on_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 9px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="cekici_sol_on_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="cekici_sol_on_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="cekici_sol_on_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="cekici_sol_on_ebat"
+                    class="form-input" placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="cekici_sol_on_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="cekici_sol_on_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+
+            <!-- Sağ Ön -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #3b82f6;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">▶️ 1 SAĞ ÖN</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('cekici_sag_on', 'yeni')" id="cekici_sag_on_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('cekici_sag_on', 'cikma')" id="cekici_sag_on_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="cekici_sag_on_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="cekici_sag_on_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="cekici_sag_on_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="cekici_sag_on_ebat"
+                    class="form-input" placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="cekici_sag_on_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="cekici_sag_on_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ÇEKER DİNGİL -->
+        <div class="mb-8 p-5 rounded-xl"
+          style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1)); border: 3px solid #f59e0b;">
+          <div class="flex justify-between items-center mb-5 cursor-pointer select-none"
+            style="border-bottom: 2px solid #f59e0b; padding-bottom: 8px;" onclick="toggleDingil(this)">
+            <h4 class="font-bold text-lg" style="color: #f59e0b; margin-bottom: 0;">⚙️ ÇEKER DİNGİL</h4>
+            <span class="toggle-icon text-xl">🔼</span>
+          </div>
+          <div class="dingil-content grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <!-- Sol Dış -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #10b981;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">◀️ 1 SOL DIŞ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('cekici_sol_dis', 'yeni')" id="cekici_sol_dis_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('cekici_sol_dis', 'cikma')"
+                      id="cekici_sol_dis_cikma" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="cekici_sol_dis_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="cekici_sol_dis_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="cekici_sol_dis_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="cekici_sol_dis_ebat"
+                    class="form-input" placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="cekici_sol_dis_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="cekici_sol_dis_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+
+            <!-- Sol İç -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #8b5cf6;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">◀️ 1 SOL İÇ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('cekici_sol_ic', 'yeni')" id="cekici_sol_ic_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('cekici_sol_ic', 'cikma')" id="cekici_sol_ic_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="cekici_sol_ic_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="cekici_sol_ic_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="cekici_sol_ic_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="cekici_sol_ic_ebat"
+                    class="form-input" placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="cekici_sol_ic_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="cekici_sol_ic_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+
+            <!-- Sağ İç -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #ec4899;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">▶️ 1 SAĞ İÇ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('cekici_sag_ic', 'yeni')" id="cekici_sag_ic_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('cekici_sag_ic', 'cikma')" id="cekici_sag_ic_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="cekici_sag_ic_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="cekici_sag_ic_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="cekici_sag_ic_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="cekici_sag_ic_ebat"
+                    class="form-input" placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="cekici_sag_ic_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="cekici_sag_ic_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+
+            <!-- Sağ Dış -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #3b82f6;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">▶️ 1 SAĞ DIŞ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('cekici_sag_dis', 'yeni')" id="cekici_sag_dis_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('cekici_sag_dis', 'cikma')"
+                      id="cekici_sag_dis_cikma" class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="cekici_sag_dis_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="cekici_sag_dis_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="cekici_sag_dis_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="cekici_sag_dis_ebat"
+                    class="form-input" placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="cekici_sag_dis_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="cekici_sag_dis_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dorse Lastik Bilgileri -->
+      <div id="dorseTireInfo" class="form-card" style="display: none;">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="font-semibold text-xl" style="color: #8b5cf6">🚛 DORSE LASTİK BİLGİLERİ</h3>
+          <div class="flex gap-2">
+            <button type="button" onclick="toggleAllDingils('dorseTireInfo', true)" class="btn-primary"
+              style="padding: 6px 12px; font-size: 11px; background: #8b5cf6; border-radius: 8px;">Hepsini Aç</button>
+            <button type="button" onclick="toggleAllDingils('dorseTireInfo', false)" class="btn-primary"
+              style="padding: 6px 12px; font-size: 11px; background: #64748b; border-radius: 8px;">Hepsini
+              Kapat</button>
+          </div>
+        </div>
+
+        <!-- 1. DİNGİL -->
+        <div class="mb-8 p-5 rounded-xl"
+          style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1)); border: 3px solid #8b5cf6;">
+          <div class="flex justify-between items-center mb-5 cursor-pointer select-none"
+            style="border-bottom: 2px solid #8b5cf6; padding-bottom: 8px;" onclick="toggleDingil(this)">
+            <h4 class="font-bold text-lg" style="color: #8b5cf6; margin-bottom: 0;">1️⃣ 1. DİNGİL</h4>
+            <span class="toggle-icon text-xl">🔼</span>
+          </div>
+          <div class="dingil-content grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <!-- 1. Dingil Sol -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #10b981;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">◀️ SOL</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('dorse_1_sol', 'yeni')" id="dorse_1_sol_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('dorse_1_sol', 'cikma')" id="dorse_1_sol_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="dorse_1_sol_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="dorse_1_sol_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="dorse_1_sol_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="dorse_1_sol_ebat" class="form-input"
+                    placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="dorse_1_sol_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="dorse_1_sol_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+
+            <!-- 1. Dingil Sağ -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #3b82f6;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">▶️ SAĞ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('dorse_1_sag', 'yeni')" id="dorse_1_sag_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('dorse_1_sag', 'cikma')" id="dorse_1_sag_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="dorse_1_sag_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="dorse_1_sag_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="dorse_1_sag_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="dorse_1_sag_ebat" class="form-input"
+                    placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="dorse_1_sag_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="dorse_1_sag_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. DİNGİL -->
+        <div class="mb-8 p-5 rounded-xl"
+          style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1)); border: 3px solid #3b82f6;">
+          <div class="flex justify-between items-center mb-5 cursor-pointer select-none"
+            style="border-bottom: 2px solid #3b82f6; padding-bottom: 8px;" onclick="toggleDingil(this)">
+            <h4 class="font-bold text-lg" style="color: #3b82f6; margin-bottom: 0;">2️⃣ 2. DİNGİL</h4>
+            <span class="toggle-icon text-xl">🔼</span>
+          </div>
+          <div class="dingil-content grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <!-- 2. Dingil Sol -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #10b981;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">◀️ SOL</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('dorse_2_sol', 'yeni')" id="dorse_2_sol_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('dorse_2_sol', 'cikma')" id="dorse_2_sol_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="dorse_2_sol_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="dorse_2_sol_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="dorse_2_sol_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="dorse_2_sol_ebat" class="form-input"
+                    placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="dorse_2_sol_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="dorse_2_sol_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+
+            <!-- 2. Dingil Sağ -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #3b82f6;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">▶️ SAĞ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('dorse_2_sag', 'yeni')" id="dorse_2_sag_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('dorse_2_sag', 'cikma')" id="dorse_2_sag_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="dorse_2_sag_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="dorse_2_sag_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="dorse_2_sag_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="dorse_2_sag_ebat" class="form-input"
+                    placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="dorse_2_sag_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="dorse_2_sag_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. DİNGİL -->
+        <div class="mb-8 p-5 rounded-xl"
+          style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1)); border: 3px solid #f59e0b;">
+          <div class="flex justify-between items-center mb-5 cursor-pointer select-none"
+            style="border-bottom: 2px solid #f59e0b; padding-bottom: 8px;" onclick="toggleDingil(this)">
+            <h4 class="font-bold text-lg" style="color: #f59e0b; margin-bottom: 0;">3️⃣ 3. DİNGİL</h4>
+            <span class="toggle-icon text-xl">🔼</span>
+          </div>
+          <div class="dingil-content grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            <!-- 3. Dingil Sol -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #10b981;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">◀️ SOL</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('dorse_3_sol', 'yeni')" id="dorse_3_sol_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('dorse_3_sol', 'cikma')" id="dorse_3_sol_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="dorse_3_sol_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="dorse_3_sol_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="dorse_3_sol_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="dorse_3_sol_ebat" class="form-input"
+                    placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="dorse_3_sol_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="dorse_3_sol_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+
+            <!-- 3. Dingil Sağ -->
+            <div class="p-4 rounded-lg" style="background: var(--bg-secondary); border: 2px solid #3b82f6;">
+              <h5 class="font-semibold mb-3 text-base" style="color: var(--accent-orange)">▶️ SAĞ</h5>
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label">Durum</label>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="selectTireStatus('dorse_3_sag', 'yeni')" id="dorse_3_sag_yeni"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">YENİ</button>
+                    <button type="button" onclick="selectTireStatus('dorse_3_sag', 'cikma')" id="dorse_3_sag_cikma"
+                      class="btn-primary flex-1"
+                      style="padding: 8px; font-size: 12px; background: #64748b;">ÇIKMA</button>
+                  </div>
+                </div>
+                <div><label class="form-label">Marka</label> <input type="text" id="dorse_3_sag_marka"
+                    class="form-input" placeholder="Marka"></div>
+                <div><label class="form-label">KM</label> <input type="number" id="dorse_3_sag_km" class="form-input"
+                    placeholder="0"></div>
+                <div><label class="form-label">Takılma Tarihi</label> <input type="date" id="dorse_3_sag_tarih"
+                    class="form-input"></div>
+                <div><label class="form-label">Ebat</label> <input type="text" id="dorse_3_sag_ebat" class="form-input"
+                    placeholder="Ebat"></div>
+                <div><label class="form-label">Seri No</label> <input type="text" id="dorse_3_sag_seri"
+                    class="form-input" placeholder="Seri No"></div>
+                <div><label class="form-label">Sensör</label> <input type="text" id="dorse_3_sag_sensor"
+                    class="form-input" placeholder="Sensör Bilgisi"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notlar -->
+      <div class="form-card">
+        <h3 class="font-semibold text-lg mb-4" style="color: var(--accent-blue)">📝 Notlar</h3>
+        <textarea id="notlar" class="form-input" rows="4" placeholder="Notlarınızı buraya yazın..."></textarea>
+      </div>
+
+      <!-- Toplam Fiyat -->
+      <div class="form-card">
+        <h3 class="font-semibold text-lg mb-4" style="color: var(--accent-orange)">💰 Toplam Fiyat</h3>
+        <div class="flex items-center gap-3">
+          <input type="number" id="toplamFiyat" class="form-input flex-1" placeholder="0" step="0.01" min="0">
+          <span class="font-semibold text-lg">₺</span>
+        </div>
+      </div>
+
+      <!-- İmza -->
+      <div class="form-card">
+        <h3 class="font-semibold text-lg mb-4" style="color: var(--accent-orange)">✍️ Sürücü İmzası</h3>
+        <div class="signature-wrapper">
+          <canvas id="signatureCanvas" width="600" height="300"></canvas>
+          <div class="signature-hint" id="signatureHint">✍️ İmza için buraya çizin</div>
+        </div>
+        <div class="text-center mt-4">
+          <button type="button" onclick="clearSignature()" class="btn-primary"
+            style="padding: 10px 24px; font-size: 14px;"> 🗑️ İmzayı Temizle </button>
+        </div>
+      </div>
+
+      <!-- Kaydet Butonu -->
+      <div class="text-center">
+        <button id="saveBtn" class="btn-primary" onclick="saveForm()"> 💾 Kaydet </button>
+      </div>
+    </div>
+
+    <!-- History Section -->
+    <div id="historySection" class="content-section">
+      <div class="section-header">
+        <span style="font-size: 32px">📋</span>
+        <h2 class="section-title">Geçmiş Kayıtlar</h2>
+      </div>
+
+      <!-- Excel & PDF Buttons for History -->
+      <div class="flex flex-wrap gap-3 mb-6">
+        <button onclick="exportHistoryToExcel()" class="btn-primary flex items-center gap-2"
+          style="background: #10b981;">
+          <span>📊</span> Geçmiş Excel
+        </button>
+        <button onclick="exportHistoryToPDF()" class="btn-primary flex items-center gap-2" style="background: #ef4444;">
+          <span>📄</span> Geçmiş PDF
+        </button>
+        <div id="cloudStatus" class="mt-4 text-center p-2 rounded-lg bg-gray-100 text-xs" title="Senkronizasyon Durumu">
+          <span class="text-gray-400">☁️...</span>
+        </div>
+      </div>
+
+      <div id="historyList">
+        <p style="color: var(--text-secondary); text-align: center; padding: 40px">Henüz kayıt yok</p>
+      </div>
+    </div>
+
+    <!-- Trash Section -->
+    <div id="trashSection" class="content-section">
+      <div class="section-header" style="border-bottom-color: #ef4444;">
+        <span style="font-size: 32px">🗑️</span>
+        <h2 class="section-title" style="color: #ef4444;">Çöp Kutusu (Son Silinenler)</h2>
+      </div>
+
+      <!-- Excel & PDF Buttons for Trash -->
+      <div class="flex flex-wrap gap-3 mb-6">
+        <button onclick="exportTrashToExcel()" class="btn-primary flex items-center gap-2" style="background: #10b981;">
+          <span>📊</span> Çöp Kutusu Excel
+        </button>
+        <button onclick="exportTrashToPDF()" class="btn-primary flex items-center gap-2" style="background: #ef4444;">
+          <span>📄</span> Çöp Kutusu PDF
+        </button>
+      </div>
+
+      <div class="form-card mb-4 bg-red-50 border border-red-100">
+        <p class="text-sm text-red-600">⚠️ Buradaki kayıtlar 30 gün sonra otomatik olarak silinebilir. Geri yüklemek
+          için yeşil butonu kullanın.</p>
+      </div>
+
+      <div id="trashList">
+        <p style="color: var(--text-secondary); text-align: center; padding: 40px">Çöp kutusu boş</p>
+      </div>
+    </div>
+
+    <!-- Reports Section -->
+    <div id="reportsSection" class="content-section">
+      <div class="section-header">
+        <span style="font-size: 32px">📈</span>
+        <h2 class="section-title">Raporlar & Analiz</h2>
+      </div>
+
+      <!-- Excel & PDF Buttons -->
+      <div class="flex flex-wrap gap-3 mb-6">
+        <button onclick="exportReportsToExcel()" class="btn-primary flex items-center gap-2"
+          style="background: #10b981;">
+          <span>📊</span> Excel İndir
+        </button>
+        <button onclick="exportReportsToPDF()" class="btn-primary flex items-center gap-2" style="background: #ef4444;">
+          <span>📄</span> PDF İndir
+        </button>
+      </div>
+
+      <!-- Özet Kartlar -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="form-card text-center">
+          <div class="text-4xl mb-2">💰</div>
+          <div class="text-2xl font-bold" style="color: var(--accent-orange)" id="totalCost">0 ₺</div>
+          <div class="text-sm" style="color: var(--text-secondary)">Toplam Maliyet</div>
+        </div>
+        <div class="form-card text-center">
+          <div class="text-4xl mb-2">📡</div>
+          <div class="text-2xl font-bold" style="color: var(--accent-blue)" id="totalSensors">0</div>
+          <div class="text-sm" style="color: var(--text-secondary)">Takılan Toplam Sensör</div>
+        </div>
+        <div class="form-card text-center">
+          <div class="text-4xl mb-2">🚛</div>
+          <div class="text-2xl font-bold" style="color: #10b981" id="totalVehiclesReport">0</div>
+          <div class="text-sm" style="color: var(--text-secondary)">Raporlanan Araç</div>
+        </div>
+      </div>
+
+      <!-- Detaylı Tablo -->
+      <div class="form-card">
+        <h3 class="font-semibold text-lg mb-4">Detaylı Araç Raporu</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left" style="font-size: 14px; border-collapse: separate; border-spacing: 0 8px;">
+            <thead>
+              <tr style="color: var(--text-secondary);">
+                <th class="p-3">Plaka</th>
+                <th class="p-3">Araç Tipi</th>
+                <th class="p-3 text-center">İşlem</th>
+                <th class="p-3 text-center">Sensör</th>
+                <th class="p-3">Maliyet</th>
+                <th class="p-3">Son İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="reportsTableBody">
+              <!-- JS ile dolacak -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="vehiclesSection" class="content-section">
+      <div class="section-header">
+        <span style="font-size: 32px">🚛</span>
+        <h2 class="section-title">Kayıtlı Araçlar</h2>
+      </div>
+
+      <!-- Excel & PDF Buttons -->
+      <div class="flex flex-wrap gap-3 mb-6">
+        <button onclick="exportVehiclesToExcel()" class="btn-primary flex items-center gap-2"
+          style="background: #10b981;">
+          <span>📊</span> Araç Listesi Excel
+        </button>
+        <button onclick="exportVehiclesToPDF()" class="btn-primary flex items-center gap-2"
+          style="background: #ef4444;">
+          <span>📄</span> Araç Listesi PDF
+        </button>
+      </div>
+
+      <!-- Arama ve Filtreleme -->
+      <div class="form-card mb-4">
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="flex-1">
+            <input type="text" id="vehicleSearch" placeholder="🔍 Plaka ara..." class="form-input"
+              oninput="renderVehicles(records)">
+          </div>
+          <div class="flex-1">
+            <select id="vehicleFilter" class="form-input" onchange="renderVehicles(records)">
+              <option value="all">📋 Tümü</option>
+              <option value="active">✅ Aktif Araçlar</option>
+              <option value="passive">❌ Pasif Araçlar</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="vehiclesList">
+        <p style="color: var(--text-secondary); text-align: center; padding: 40px">Yükleniyor...</p>
+      </div>
+
+      <!-- Vehicle Detail Modal -->
+      <div id="vehicleDetailModal" class="modal-overlay hidden" onclick="closeVehicleDetail(event)">
+        <div class="modal-content" style="max-width: 900px; max-height: 90%; overflow-y: auto;"
+          onclick="event.stopPropagation()">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold" id="detailPlaka">Araç Detayları</h2>
+            <button onclick="closeVehicleDetail()" class="text-3xl"
+              style="background: none; border: none; cursor: pointer; color: var(--text-secondary)">×</button>
+          </div>
+          <div id="vehicleDetailContent"><!-- Detail content will be inserted here --></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Section -->
+    <div id="profileSection" class="content-section">
+      <div class="section-header">
+        <span style="font-size: 32px">👤</span>
+        <h2 class="section-title">Profil</h2>
+      </div>
+      <div class="form-card">
+        <div class="text-center mb-6">
+          <img id="profileAvatar"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&amp;s"
+            class="profile-avatar mx-auto mb-3">
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="form-label">Giriş E-posta</label>
+            <input type="email" id="profileEmail" class="form-input" placeholder="email@example.com" readonly
+              style="background: var(--border-color); cursor: not-allowed;">
+            <p class="text-xs mt-2" style="color: var(--text-secondary)">E-posta değiştirilemez</p>
+          </div>
+          <div style="border-top: 2px solid var(--border-color); margin: 24px 0; padding-top: 24px;">
+            <h3 class="font-semibold text-lg mb-4" style="color: var(--accent-orange)">🔐 Şifremi Yenile</h3>
+            <div id="passwordChangeForm">
+              <div class="mb-4">
+                <label class="form-label">Yeni Şifre</label>
+                <input type="password" id="newPassword" class="form-input" placeholder="Yeni şifrenizi girin">
+              </div>
+              <div class="mb-4">
+                <label class="form-label">Yeni Şifre Tekrar</label>
+                <input type="password" id="confirmPassword" class="form-input"
+                  placeholder="Yeni şifrenizi tekrar girin">
+              </div>
+              <div class="flex gap-3">
+                <button onclick="changePassword()" class="btn-primary flex-1"> ✅ Kaydet </button>
+                <button onclick="cancelPasswordChange()" class="btn-primary flex-1" style="background: #64748b;"> ❌
+                  İptal </button>
+              </div>
+            </div>
+          </div>
+          <div style="border-top: 2px solid var(--border-color); margin: 24px 0; padding-top: 24px;">
+            <button onclick="logout()" class="btn-primary w-full" style="background: #ef4444;"> 🚪 Çıkış Yap </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications Section -->
+    <div id="notificationsSection" class="content-section">
+      <div class="section-header">
+        <span style="font-size: 32px">🔔</span>
+        <h2 class="section-title">Bildirimler</h2>
+      </div>
+      <div class="form-card">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="font-semibold">Yeni Kayıt Bildirimleri</div>
+            <div class="text-sm" style="color: var(--text-secondary)">Yeni araç kaydedildiğinde bildirim al</div>
+          </div>
+          <div class="toggle-switch" id="notifToggle" onclick="toggleNotifications()">
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+      </div>
+      <div id="notificationList" class="space-y-3">
+        <div class="record-card">
+          <div class="flex items-center gap-3">
+            <span style="font-size: 24px">🚛</span>
+            <div class="flex-1">
+              <div class="font-semibold">Yeni araç kaydedildi</div>
+              <div class="text-sm" style="color: var(--text-secondary)">06 ABC 123 - 2 saat önce</div>
+            </div>
+          </div>
+        </div>
+        <div class="record-card">
+          <div class="flex items-center gap-3">
+            <span style="font-size: 24px">⚠️</span>
+            <div class="flex-1">
+              <div class="font-semibold">Lastik bakım hatırlatması</div>
+              <div class="text-sm" style="color: var(--text-secondary)">34 XYZ 789 - 5 saat önce</div>
+            </div>
+          </div>
+        </div>
+        <div class="record-card">
+          <div class="flex items-center gap-3">
+            <span style="font-size: 24px">✅</span>
+            <div class="flex-1">
+              <div class="font-semibold">Bakım tamamlandı</div>
+              <div class="text-sm" style="color: var(--text-secondary)">06 DEF 456 - 1 gün önce</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div id="settingsSection" class="content-section">
+      <div class="section-header">
+        <span style="font-size: 32px">⚙️</span>
+        <h2 class="section-title">Ayarlar</h2>
+      </div>
+      <div class="form-card">
+        <h3 class="font-semibold text-lg mb-4">Görünüm</h3>
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="font-semibold">Koyu Mod</div>
+            <div class="text-sm" style="color: var(--text-secondary)">Karanlık tema kullan</div>
+          </div>
+          <div class="toggle-switch active" id="darkModeToggle" onclick="toggleDarkMode()">
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="font-semibold">Açık Mod</div>
+            <div class="text-sm" style="color: var(--text-secondary)">Aydınlık tema kullan</div>
+          </div>
+          <div class="toggle-switch" id="lightModeToggle" onclick="toggleLightMode()">
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="text-center">
+          <div class="logo-container mx-auto" style="width: 150px; height: 150px;">
+            <img id="settingsLogo"
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&amp;s"
+              alt="Logo">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users Section -->
+    <div id="usersSection" class="content-section">
+      <div class="section-header">
+        <span style="font-size: 32px">👥</span>
+        <h2 class="section-title">Kullanıcı Yönetimi</h2>
+      </div>
+
+      <!-- Excel & PDF Buttons for Users -->
+      <div class="flex flex-wrap gap-3 mb-6">
+        <button onclick="exportUsersToExcel()" class="btn-primary flex items-center gap-2" style="background: #10b981;">
+          <span>📊</span> Kullanıcı Listesi Excel
+        </button>
+        <button onclick="exportUsersToPDF()" class="btn-primary flex items-center gap-2" style="background: #ef4444;">
+          <span>📄</span> Kullanıcı Listesi PDF
+        </button>
+      </div>
+      <div class="form-card">
+        <h3 class="font-semibold text-lg mb-4" style="color: var(--accent-orange)">➕ Yeni Kullanıcı Ekle</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="form-label">E-posta</label>
+            <input type="email" id="newUserEmail" class="form-input" placeholder="yeni@email.com">
+          </div>
+          <div>
+            <label class="form-label">Şifre</label>
+            <input type="password" id="newUserPassword" class="form-input" placeholder="Şifre oluşturun">
+          </div>
+          <button onclick="createNewUser()" class="btn-primary w-full"> 👤 Kullanıcı Oluştur </button>
+        </div>
+      </div>
+      <div class="form-card">
+        <h3 class="font-semibold text-lg mb-4" style="color: var(--accent-blue)">📋 Kayıtlı Kullanıcılar</h3>
+        <div id="usersList"><!-- Users will be listed here --></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    // Ana değişkenler
+    // --- EXPORT FUNCTIONS ---
+
+    function downloadFile(content, fileName, contentType) {
+      const a = document.createElement('a');
+      const file = new Blob([content], { type: contentType });
+      a.href = URL.createObjectURL(file);
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // 1. VEHICLE LIST EXPORT
+    function exportVehiclesToExcel() {
+      const isAdmin = (savedEmail === 'mustafa@akkoc');
+      let authorizedData = records;
+      // if (!isAdmin) authorizedData = records.filter(r => r.user_email === savedEmail);
+
+      const uniquePlakas = [...new Set(authorizedData.map(r => r.plaka).filter(p => p))];
+      if (uniquePlakas.length === 0) { showToast('Dışa aktarılacak araç yok', 'error'); return; }
+
+      let csvContent = "\uFEFF"; // UTF-8 BOM
+      csvContent += "Plaka;Araç Tipi;Durum;Son Sürücü;Son İşlem Tarihi;İşlem Sayısı\n";
+
+      uniquePlakas.forEach(plaka => {
+        const vRecords = authorizedData.filter(r => r.plaka === plaka);
+        const lastR = vRecords.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+        const status = getVehicleStatus(plaka) === 'active' ? 'Aktif' : 'Pasif';
+        const type = lastR.arac_tipi === 'kamyon' ? 'Kamyon' : 'Çekici + Dorse';
+        const lastDate = new Date(lastR.created_at).toLocaleDateString('tr-TR');
+
+        csvContent += `${plaka};${type};${status};${lastR.surucu_adi};${lastDate};${vRecords.length}\n`;
+      });
+
+      downloadFile(csvContent, 'akkoc_arac_listesi.csv', 'text/csv;charset=utf-8');
+      showToast('✅ Excel (CSV) dosyası indiriliyor...', 'success');
+    }
+
+    function exportVehiclesToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const isAdmin = (savedEmail === 'mustafa@akkoc');
+      let authorizedData = records;
+      const uniquePlakas = [...new Set(authorizedData.map(r => r.plaka).filter(p => p))];
+
+      doc.setFontSize(18);
+      doc.text("Akkoç Lojistik - Kayıtlı Araç Listesi", 14, 20);
+      doc.setFontSize(10);
+      doc.text(`Tarih: ${new Date().toLocaleString('tr-TR')}`, 14, 28);
+
+      const tableData = uniquePlakas.map(plaka => {
+        const vRecords = authorizedData.filter(r => r.plaka === plaka);
+        const lastR = vRecords.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+        return [
+          plaka,
+          lastR.arac_tipi === 'kamyon' ? 'Kamyon' : 'Çekici',
+          getVehicleStatus(plaka) === 'active' ? 'Aktif' : 'Pasif',
+          lastR.surucu_adi,
+          new Date(lastR.created_at).toLocaleDateString('tr-TR'),
+          vRecords.length
+        ];
+      });
+
+      doc.autoTable({
+        startY: 35,
+        head: [['Plaka', 'Tip', 'Durum', 'Sürücü', 'Son İşlem', 'Kayıt']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [249, 115, 22] } // accent-orange
+      });
+
+      doc.save('akkoc_arac_listesi.pdf');
+      showToast('✅ PDF dosyası indiriliyor...', 'success');
+    }
+
+    // 2. REPORTS EXPORT
+    function exportReportsToExcel() {
+      if (records.length === 0) { showToast('Dışa aktarılacak rapor verisi yok', 'error'); return; }
+
+      const reportDataMap = {};
+      records.forEach(record => {
+        const plaka = record.plaka;
+        if (!reportDataMap[plaka]) {
+          reportDataMap[plaka] = { plaka, type: record.arac_tipi, count: 0, sensors: 0, cost: 0, lastDate: record.created_at };
+        }
+        if (new Date(record.created_at) > new Date(reportDataMap[plaka].lastDate)) reportDataMap[plaka].lastDate = record.created_at;
+        reportDataMap[plaka].count++;
+        reportDataMap[plaka].cost += parseFloat(record.toplam_fiyat) || 0;
+        Object.keys(record).forEach(key => { if (key.endsWith('_sensor') && record[key]) reportDataMap[plaka].sensors++; });
+      });
+
+      let csvContent = "\uFEFF";
+      csvContent += "Plaka;Araç Tipi;İşlem Sayısı;Sensör Sayısı;Toplam Maliyet;Son İşlem\n";
+
+      Object.values(reportDataMap).forEach(item => {
+        const type = item.type === 'kamyon' ? 'Kamyon' : 'Çekici';
+        const cost = item.cost.toFixed(2);
+        const date = new Date(item.lastDate).toLocaleDateString('tr-TR');
+        csvContent += `${item.plaka};${type};${item.count};${item.sensors};${cost} TL;${date}\n`;
+      });
+
+      downloadFile(csvContent, 'akkoc_genel_rapor.csv', 'text/csv;charset=utf-8');
+      showToast('✅ Rapor Excel (CSV) dosyası indiriliyor...', 'success');
+    }
+
+    function exportReportsToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(18);
+      doc.text("Akkoç Lojistik - Genel Rapor ve Analiz", 14, 20);
+
+      const reportDataMap = {};
+      records.forEach(record => {
+        const plaka = record.plaka;
+        if (!reportDataMap[plaka]) {
+          reportDataMap[plaka] = { plaka, type: record.arac_tipi, count: 0, sensors: 0, cost: 0, lastDate: record.created_at };
+        }
+        if (new Date(record.created_at) > new Date(reportDataMap[plaka].lastDate)) reportDataMap[plaka].lastDate = record.created_at;
+        reportDataMap[plaka].count++;
+        reportDataMap[plaka].cost += parseFloat(record.toplam_fiyat) || 0;
+        Object.keys(record).forEach(key => { if (key.endsWith('_sensor') && record[key]) reportDataMap[plaka].sensors++; });
+      });
+
+      const tableData = Object.values(reportDataMap).map(item => [
+        item.plaka,
+        item.type === 'kamyon' ? 'Kamyon' : 'Çekici',
+        item.count,
+        item.sensors,
+        item.cost.toLocaleString('tr-TR') + ' TL',
+        new Date(item.lastDate).toLocaleDateString('tr-TR')
+      ]);
+
+      doc.autoTable({
+        startY: 30,
+        head: [['Plaka', 'Tip', 'İşlem', 'Sensör', 'Maliyet', 'Son Tarih']],
+        body: tableData,
+        headStyles: { fillColor: [59, 130, 246] } // accent-blue
+      });
+
+      doc.save('akkoc_genel_rapor.pdf');
+      showToast('✅ Rapor PDF dosyası indiriliyor...', 'success');
+    }
+
+    // 3. USER LIST EXPORT
+    function exportUsersToExcel() {
+      if (allUsers.length === 0) { showToast('Dışa aktarılacak kullanıcı yok', 'error'); return; }
+
+      let csvContent = "\uFEFF"; // UTF-8 BOM
+      csvContent += "E-posta;Rol;Oluşturulma Tarihi\n";
+
+      allUsers.forEach(user => {
+        const date = user.created_at ? new Date(user.created_at).toLocaleDateString('tr-TR') : '-';
+        csvContent += `${user.email};${user.role || 'user'};${date}\n`;
+      });
+
+      downloadFile(csvContent, 'akkoc_kullanici_listesi.csv', 'text/csv;charset=utf-8');
+      showToast('✅ Kullanıcı listesi Excel (CSV) indiriliyor...', 'success');
+    }
+
+    function exportUsersToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(18);
+      doc.text("Akkoç Lojistik - Kayıtlı Kullanıcı Listesi", 14, 20);
+
+      const tableData = allUsers.map(user => [
+        user.email,
+        user.role || 'user',
+        user.created_at ? new Date(user.created_at).toLocaleDateString('tr-TR') : '-'
+      ]);
+
+      doc.autoTable({
+        startY: 30,
+        head: [['E-posta', 'Yetki/Rol', 'Kayıt Tarihi']],
+        body: tableData,
+        headStyles: { fillColor: [16, 185, 129] } // emerald-500
+      });
+
+      doc.save('akkoc_kullanici_listesi.pdf');
+      showToast('✅ Kullanıcı listesi PDF indiriliyor...', 'success');
+    }
+
+    // 4. HISTORY EXPORT
+    function exportHistoryToExcel() {
+      const isAdmin = (savedEmail === 'mustafa@akkoc');
+      let authorizedData = records;
+
+      if (authorizedData.length === 0) { showToast('Dışa aktarılacak geçmiş kayıt yok', 'error'); return; }
+
+      let csvContent = "\uFEFF"; // UTF-8 BOM
+      csvContent += "Plaka;Sürücü;Tip;Tarih;Tutar;Notlar\n";
+
+      const sortedData = [...authorizedData].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      sortedData.forEach(r => {
+        const date = new Date(r.created_at).toLocaleString('tr-TR');
+        const type = r.arac_tipi === 'kamyon' ? 'Kamyon' : 'Çekici';
+        const price = r.toplam_fiyat || 0;
+        const note = (r.notlar || '').replace(/;/g, ',');
+        csvContent += `${r.plaka};${r.surucu_adi};${type};${date};${price} TL;${note}\n`;
+      });
+
+      downloadFile(csvContent, 'akkoc_gecmis_kayitlar.csv', 'text/csv;charset=utf-8');
+      showToast('✅ Geçmiş kayıtlar Excel (CSV) indiriliyor...', 'success');
+    }
+
+    function exportHistoryToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const isAdmin = (savedEmail === 'mustafa@akkoc');
+      let authorizedData = records;
+
+      doc.setFontSize(18);
+      doc.text("Akkoç Lojistik - Geçmiş İşlem Kayıtları", 14, 20);
+
+      const sortedData = [...authorizedData].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      const tableData = sortedData.map(r => [
+        r.plaka,
+        r.surucu_adi,
+        r.arac_tipi === 'kamyon' ? 'Kamyon' : 'Çekici',
+        new Date(r.created_at).toLocaleDateString('tr-TR'),
+        (r.toplam_fiyat || 0).toLocaleString('tr-TR') + ' TL'
+      ]);
+
+      doc.autoTable({
+        startY: 30,
+        head: [['Plaka', 'Sürücü', 'Tip', 'Tarih', 'Tutar']],
+        body: tableData,
+        headStyles: { fillColor: [59, 130, 246] } // blue-500
+      });
+
+      doc.save('akkoc_gecmis_kayitlar.pdf');
+      showToast('✅ Geçmiş kayıtlar PDF indiriliyor...', 'success');
+    }
+
+    // 5. TRASH EXPORT
+    function exportTrashToExcel() {
+      let trashData = [];
+      try {
+        trashData = JSON.parse(localStorage.getItem('deleted_vehicle_records') || '[]');
+      } catch (e) { trashData = []; }
+
+      if (trashData.length === 0) { showToast('Çöp kutusu boş', 'error'); return; }
+
+      let csvContent = "\uFEFF"; // UTF-8 BOM
+      csvContent += "Plaka;Silinme Tarihi;Orijinal Kayıt Tarihi\n";
+
+      trashData.forEach(r => {
+        const delDate = r.deleted_at ? new Date(r.deleted_at).toLocaleString('tr-TR') : '-';
+        const origDate = r.created_at ? new Date(r.created_at).toLocaleString('tr-TR') : '-';
+        csvContent += `${r.plaka};${delDate};${origDate}\n`;
+      });
+
+      downloadFile(csvContent, 'akkoc_cop_kutusu.csv', 'text/csv;charset=utf-8');
+      showToast('✅ Çöp kutusu verileri Excel (CSV) indiriliyor...', 'success');
+    }
+
+    function exportTrashToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      let trashData = [];
+      try {
+        trashData = JSON.parse(localStorage.getItem('deleted_vehicle_records') || '[]');
+      } catch (e) { trashData = []; }
+
+      doc.setFontSize(18);
+      doc.text("Akkoç Lojistik - Çöp Kutusu (Silinenler)", 14, 20);
+
+      const tableData = trashData.map(r => [
+        r.plaka,
+        r.deleted_at ? new Date(r.deleted_at).toLocaleString('tr-TR') : '-',
+        r.arac_tipi === 'kamyon' ? 'Kamyon' : 'Çekici'
+      ]);
+
+      doc.autoTable({
+        startY: 30,
+        head: [['Plaka', 'Silinme Tarihi', 'Tip']],
+        body: tableData,
+        headStyles: { fillColor: [239, 68, 68] } // red-500
+      });
+
+      doc.save('akkoc_cop_kutusu.pdf');
+      showToast('✅ Çöp kutusu verileri PDF indiriliyor...', 'success');
+    }
+
+    // Başlat
+    var isAuthenticated = false;
+    let currentTheme = localStorage.getItem('app_theme') || 'dark';
+    let userProfile = JSON.parse(localStorage.getItem('user_profile') || '{}');
+    let appLogo = localStorage.getItem('app_logo') || '';
+    let notificationsEnabled = localStorage.getItem('notifications_enabled') === 'true';
+    var records = [];
+    let currentRecordCount = 0;
+    let selectedVehicleType = 'kamyon';
+    let currentPhotoRecordId = null; // Kayıt ID'sine göre fotoğraf ekleme için
+
+    // Kimlik doğrulama
+    const DEFAULT_EMAIL = 'mustafa@akkoc';
+    const DEFAULT_PASSWORD = '1234';
+
+    // Kullanıcı yönetimi
+    function getAllUsers() {
+      try {
+        const usersData = localStorage.getItem('system_users');
+        if (usersData) {
+          return JSON.parse(usersData);
+        }
+      } catch (e) {
+        return [];
+      }
+
+      return [{
+        email: DEFAULT_EMAIL,
+        password: DEFAULT_PASSWORD,
+        created_at: new Date().toISOString(),
+        is_default: true,
+        role: 'admin',
+        permissions: {
+          canViewHistory: true,
+          canViewVehicles: true,
+          canViewUsers: true,
+          canViewProfile: true,
+          canViewNotifications: true,
+          canViewSettings: true,
+          canCreateRecord: true,
+          canViewReports: true,
+          canDeleteUsers: true,
+          canManagePermissions: true
+        }
+      }];
+    }
+
+    function saveUsers(users) {
+      try {
+        localStorage.setItem('system_users', JSON.stringify(users));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    var allUsers = getAllUsers();
+    let savedEmail = localStorage.getItem('user_email') || DEFAULT_EMAIL;
+    let savedPassword = localStorage.getItem('user_password') || DEFAULT_PASSWORD;
+    let currentUser = null;
+
+    // Giriş işlemleri
+    function checkLogin() {
+      const email = document.getElementById('loginEmail').value.toLowerCase().trim();
+      const password = document.getElementById('loginPassword').value;
+
+      // Ensure we have the latest users from sync
+      allUsers = getAllUsers();
+
+      const user = allUsers.find(u => u.email === email && u.password === password);
+
+      if (user) {
+        isAuthenticated = true;
+        savedEmail = email;
+        savedPassword = password;
+        currentUser = user;
+
+        localStorage.setItem('user_email', email);
+        localStorage.setItem('user_password', password);
+
+        document.getElementById('loginModal').classList.add('hidden');
+        showToast('Hoş geldiniz!', 'success');
+
+        if (userProfile.email !== email) {
+          userProfile.email = email;
+          localStorage.setItem('user_profile', JSON.stringify(userProfile));
+        }
+
+        document.getElementById('sidebarEmail').textContent = email;
+        loadProfile(); // Profil bilgilerini anında güncelle
+        updateMenuVisibility();
+
+        // Giriş sonrası anında bulut verilerini çek
+        if (typeof forceSyncAll === 'function') forceSyncAll();
+
+        // Ana sayfaya yönlendir
+        showSection('home');
+
+        // Giriş sonrası bir kez daha senkronizasyon tetikle (eğer varsa yeni verileri çekmek için)
+        if (typeof forceSyncAll === 'function') forceSyncAll();
+      } else {
+        // Eğer giriş başarısızsa ve internet varsa, bir kez senkronize edip tekrar denemeyi önerebiliriz
+        if (navigator.onLine && typeof forceSyncAll === 'function') {
+          showToast('Kullanıcı bulunamadı. Buluttan güncelleniyor, lütfen tekrar deneyin...', 'info');
+          forceSyncAll();
+        } else {
+          showToast('E-posta veya şifre hatalı!', 'error');
+        }
+      }
+    }
+
+    function updateMenuVisibility() {
+      if (!currentUser || !currentUser.permissions) return;
+
+      const menuItems = document.querySelectorAll('.menu-item');
+
+      menuItems.forEach(item => {
+        const onclick = item.getAttribute('onclick');
+
+        if (onclick && onclick.includes("'newRecord')") && !currentUser.permissions.canCreateRecord) {
+          item.style.display = 'none';
+        } else if (onclick && onclick.includes("'history')") && !currentUser.permissions.canViewHistory) {
+          item.style.display = 'none';
+        } else if (onclick && onclick.includes("'vehicles')") && !currentUser.permissions.canViewVehicles) {
+          item.style.display = 'none';
+        } else if (onclick && onclick.includes("'users')") && !currentUser.permissions.canViewUsers) {
+          item.style.display = 'none';
+        } else if (onclick && onclick.includes("'profile')") && !currentUser.permissions.canViewProfile) {
+          item.style.display = 'none';
+        } else if (onclick && onclick.includes("'notifications')") && !currentUser.permissions.canViewNotifications) {
+          item.style.display = 'none';
+        } else if (onclick && onclick.includes("'settings')") && !currentUser.permissions.canViewSettings) {
+          item.style.display = 'none';
+        } else if (onclick && onclick.includes("'reports')") && !currentUser.permissions.canViewReports) {
+          item.style.display = 'none';
+        } else {
+          item.style.display = 'flex';
+        }
+      });
+    }
+
+    // Şifre değiştirme
+    function changePassword() {
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (!newPassword || !confirmPassword) {
+        showToast('Tüm alanları doldurun', 'error');
+        return;
+      }
+
+      if (newPassword.length < 4) {
+        showToast('Şifre en az 4 karakter olmalı', 'error');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        showToast('Yeni şifreler eşleşmiyor!', 'error');
+        return;
+      }
+
+      savedPassword = newPassword;
+      localStorage.setItem('user_password', savedPassword);
+
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+
+      showToast('Şifre başarıyla güncellendi!', 'success');
+    }
+
+    function cancelPasswordChange() {
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+      showToast('İptal edildi', 'success');
+    }
+
+    function logout() {
+      isAuthenticated = false;
+      document.getElementById('loginModal').classList.remove('hidden');
+      document.getElementById('loginEmail').value = '';
+      document.getElementById('loginPassword').value = '';
+      showSection('home');
+      showToast('Çıkış yapıldı', 'success');
+    }
+
+    function showForgotPassword() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('forgotPasswordForm').style.display = 'block';
+      document.getElementById('resetEmail').value = '';
+    }
+
+    function backToLogin() {
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('forgotPasswordForm').style.display = 'none';
+      document.getElementById('resetEmail').value = '';
+    }
+
+    function resetPassword() {
+      const email = document.getElementById('resetEmail').value.toLowerCase().trim();
+
+      if (!email) {
+        showToast('Lütfen e-posta adresinizi girin', 'error');
+        return;
+      }
+
+      if (email === savedEmail) {
+        savedPassword = DEFAULT_PASSWORD;
+        localStorage.setItem('user_password', savedPassword);
+
+        showToast('Şifreniz sıfırlandı! Yeni şifre: 1234', 'success');
+
+        setTimeout(() => {
+          document.getElementById('loginEmail').value = email;
+          backToLogin();
+        }, 2000);
+      } else {
+        showToast('Bu e-posta adresi kayıtlı değil!', 'error');
+      }
+    }
+
+    // Sidebar
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('active');
+    }
+
+    function closeSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+    }
+
+    function showSection(sectionName) {
+      document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+        section.style.display = 'none'; // Ensure they are hidden
+      });
+
+      document.querySelectorAll('.menu-item').forEach(item => {
+        item.classList.remove('active');
+        // If the item's onclick contains the sectionName, make it active
+        if (item.getAttribute('onclick').includes(`'${sectionName}'`)) {
+          item.classList.add('active');
+        }
+      });
+
+      const sections = {
+        'home': 'homeSection',
+        'newRecord': 'newRecordSection',
+        'history': 'historySection',
+        'vehicles': 'vehiclesSection',
+        'users': 'usersSection',
+        'profile': 'profileSection',
+        'notifications': 'notificationsSection',
+        'reports': 'reportsSection',
+        'settings': 'settingsSection',
+        'trash': 'trashSection'
+      };
+
+      const targetSection = document.getElementById(sections[sectionName]);
+      if (targetSection) {
+        targetSection.classList.add('active');
+        targetSection.style.display = 'block';
+        loadProfile();
+      }
+
+      if (sectionName === 'users') {
+        renderUsersList();
+      } else if (sectionName === 'reports') {
+        renderReports();
+      } else if (sectionName === 'trash') {
+        renderTrash();
+      }
+
+      closeSidebar();
+    }
+
+    // Yeni kullanıcı oluşturma
+    function createNewUser() {
+      const email = document.getElementById('newUserEmail').value.toLowerCase().trim();
+      const password = document.getElementById('newUserPassword').value;
+
+      if (!email) {
+        showToast('❌ Lütfen e-posta girin', 'error');
+        return;
+      }
+
+      if (!password || password.length < 4) {
+        showToast('❌ Şifre en az 4 karakter olmalı', 'error');
+        return;
+      }
+
+      if (allUsers.find(u => u.email === email)) {
+        showToast('❌ Bu e-posta zaten kayıtlı', 'error');
+        return;
+      }
+
+      const newUser = {
+        email: email,
+        password: password,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        is_default: false,
+        role: 'user',
+        permissions: {
+          canViewHistory: true,
+          canViewVehicles: true,
+          canViewUsers: false,
+          canViewProfile: true,
+          canViewNotifications: true,
+          canViewSettings: true,
+          canCreateRecord: true,
+          canViewReports: false,
+          canDeleteUsers: false,
+          canManagePermissions: false
+        }
+      };
+
+      allUsers.push(newUser);
+
+      if (saveUsers(allUsers)) {
+        showToast('✅ Kullanıcı başarıyla oluşturuldu!', 'success');
+        document.getElementById('newUserEmail').value = '';
+        document.getElementById('newUserPassword').value = '';
+        renderUsersList();
+      } else {
+        showToast('❌ Kullanıcı kaydedilemedi', 'error');
+      }
+    }
+
+    // Kullanıcı listesi
+    function renderUsersList() {
+      const container = document.getElementById('usersList');
+
+      if (allUsers.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px">Henüz kullanıcı yok</p>';
+        return;
+      }
+
+      container.innerHTML = allUsers.map((user, index) => {
+        const date = new Date(user.created_at);
+        const dateStr = date.toLocaleDateString('tr-TR');
+        const roleText = user.role === 'admin' ? '👑 Admin' : '👤 Kullanıcı';
+
+        return `
+          <div class="record-card" style="margin-bottom: 20px;">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <span style="font-size: 24px">${user.role === 'admin' ? '👑' : '👤'}</span>
+                  <div>
+                    <div class="font-bold text-lg">${user.email}</div>
+                    <div class="text-sm" style="color: var(--text-secondary)">
+                      ${user.is_default ? '⭐ Varsayılan Kullanıcı' : '📅 Oluşturulma: ' + dateStr}
+                      <span style="margin-left: 12px;">${roleText}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              ${!user.is_default && currentUser && currentUser.permissions.canDeleteUsers ? `
+                <button onclick="deleteUser(${index})" class="btn-primary" style="padding: 8px 16px; background: #ef4444;">
+                  🗑️ Sil
+                </button>
+              ` : ''}
+            </div>
+            
+            ${currentUser && currentUser.permissions.canManagePermissions ? `
+              <div class="mt-4 p-4 rounded-lg" style="background: var(--bg-primary); border-top: 2px solid var(--border-color)">
+                <h4 class="font-semibold mb-3 text-sm" style="color: var(--accent-orange)">🔐 Yetkilendirme</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" id="perm_${index}_newRecord" ${user.permissions.canCreateRecord ? 'checked' : ''} onchange="updatePermission(${index}, 'canCreateRecord', this.checked)" style="cursor: pointer;">
+                    <label for="perm_${index}_newRecord" class="text-sm cursor-pointer">➕ Yeni Kayıt</label>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" id="perm_${index}_history" ${user.permissions.canViewHistory ? 'checked' : ''} onchange="updatePermission(${index}, 'canViewHistory', this.checked)" style="cursor: pointer;">
+                    <label for="perm_${index}_history" class="text-sm cursor-pointer">📋 Geçmiş</label>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" id="perm_${index}_vehicles" ${user.permissions.canViewVehicles ? 'checked' : ''} onchange="updatePermission(${index}, 'canViewVehicles', this.checked)" style="cursor: pointer;">
+                    <label for="perm_${index}_vehicles" class="text-sm cursor-pointer">🚛 Araçlar</label>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" id="perm_${index}_users" ${user.permissions.canViewUsers ? 'checked' : ''} onchange="updatePermission(${index}, 'canViewUsers', this.checked)" style="cursor: pointer;">
+                    <label for="perm_${index}_users" class="text-sm cursor-pointer">👥 Kullanıcılar</label>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" id="perm_${index}_profile" ${user.permissions.canViewProfile ? 'checked' : ''} onchange="updatePermission(${index}, 'canViewProfile', this.checked)" style="cursor: pointer;">
+                    <label for="perm_${index}_profile" class="text-sm cursor-pointer">👤 Profil</label>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" id="perm_${index}_notifications" ${user.permissions.canViewNotifications ? 'checked' : ''} onchange="updatePermission(${index}, 'canViewNotifications', this.checked)" style="cursor: pointer;">
+                    <label for="perm_${index}_notifications" class="text-sm cursor-pointer">🔔 Bildirimler</label>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" id="perm_${index}_settings" ${user.permissions.canViewSettings ? 'checked' : ''} onchange="updatePermission(${index}, 'canViewSettings', this.checked)" style="cursor: pointer;">
+                    <label for="perm_${index}_settings" class="text-sm cursor-pointer">⚙️ Ayarlar</label>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" id="perm_${index}_reports" ${user.permissions.canViewReports ? 'checked' : ''} onchange="updatePermission(${index}, 'canViewReports', this.checked)" style="cursor: pointer;">
+                    <label for="perm_${index}_reports" class="text-sm cursor-pointer">📈 Raporlar</label>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updatePermission(userIndex, permissionKey, value) {
+      if (!currentUser || !currentUser.permissions.canManagePermissions) {
+        showToast('❌ Yetki yönetme izniniz yok', 'error');
+        return;
+      }
+
+      const user = allUsers[userIndex];
+
+      if (user.is_default) {
+        showToast('❌ Varsayılan kullanıcı yetkileri değiştirilemez', 'error');
+        renderUsersList();
+        return;
+      }
+
+      if (!user.permissions) {
+        user.permissions = {};
+      }
+
+      user.permissions[permissionKey] = value;
+      user.updated_at = new Date().toISOString();
+
+      if (saveUsers(allUsers)) {
+        showToast('✅ Yetki güncellendi', 'success');
+
+        if (user.email === currentUser.email) {
+          currentUser = user;
+          updateMenuVisibility();
+        }
+      } else {
+        showToast('❌ Yetki güncellenemedi', 'error');
+      }
+    }
+
+    function deleteUser(index) {
+      const user = allUsers[index];
+
+      if (user.is_default) {
+        showToast('❌ Varsayılan kullanıcı silinemez', 'error');
+        return;
+      }
+
+      if (user.email === savedEmail) {
+        showToast('❌ Aktif kullanıcı silinemez', 'error');
+        return;
+      }
+
+      allUsers.splice(index, 1);
+
+      if (saveUsers(allUsers)) {
+        showToast('✅ Kullanıcı silindi', 'success');
+        renderUsersList();
+      } else {
+        showToast('❌ Kullanıcı silinemedi', 'error');
+      }
+    }
+
+    // Tema
+    function setTheme(theme) {
+      currentTheme = theme;
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('app_theme', theme);
+
+      const darkToggle = document.getElementById('darkModeToggle');
+      const lightToggle = document.getElementById('lightModeToggle');
+
+      if (theme === 'dark') {
+        darkToggle.classList.add('active');
+        lightToggle.classList.remove('active');
+      } else {
+        darkToggle.classList.remove('active');
+        lightToggle.classList.add('active');
+      }
+    }
+
+    function toggleDarkMode() {
+      setTheme('dark');
+    }
+
+    function toggleLightMode() {
+      setTheme('light');
+    }
+
+    function updateLogos() {
+      const logoUrl = appLogo || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&s';
+
+      document.getElementById('homeLogo').src = logoUrl;
+      document.getElementById('topLogo').src = logoUrl;
+      document.getElementById('settingsLogo').src = logoUrl;
+      document.getElementById('sidebarAvatar').src = logoUrl;
+      document.getElementById('profileAvatar').src = logoUrl;
+    }
+
+    function loadProfile() {
+      // 1. Sidebar'daki metni al (En güncel görünen veri)
+      const sidebarEl = document.getElementById('sidebarEmail');
+      const profileEl = document.getElementById('profileEmail');
+
+      let currentEmail = savedEmail; // Varsayılan
+
+      if (sidebarEl && sidebarEl.textContent.trim().includes('@')) {
+        currentEmail = sidebarEl.textContent.trim();
+      }
+
+      // 2. Her iki alanı da bu veriyle eşitle
+      if (currentEmail) {
+        if (profileEl) profileEl.value = currentEmail;
+        if (sidebarEl) sidebarEl.textContent = currentEmail;
+      } else if (userProfile.email) {
+        if (profileEl) profileEl.value = userProfile.email;
+        if (sidebarEl) sidebarEl.textContent = userProfile.email;
+      }
+
+      const logoUrl = appLogo || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&s';
+      const pAvatar = document.getElementById('profileAvatar');
+      const sAvatar = document.getElementById('sidebarAvatar');
+
+      if (pAvatar) pAvatar.src = logoUrl;
+      if (sAvatar) sAvatar.src = logoUrl;
+    }
+
+    // Bildirimler
+    async function toggleNotifications() {
+      if (!notificationsEnabled) {
+        if ('Notification' in window) {
+          const permission = await Notification.requestPermission();
+
+          if (permission === 'granted') {
+            notificationsEnabled = true;
+            localStorage.setItem('notifications_enabled', 'true');
+
+            const toggle = document.getElementById('notifToggle');
+            toggle.classList.add('active');
+
+            new Notification('🔔 Akkoç Lojistik', {
+              body: 'Bildirimler başarıyla açıldı!',
+              icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&s',
+              badge: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&s'
+            });
+
+            showToast('Bildirimler açıldı ve izinler verildi!', 'success');
+          } else {
+            showToast('Bildirim izni reddedildi', 'error');
+          }
+        } else {
+          showToast('Tarayıcınız bildirimleri desteklemiyor', 'error');
+        }
+      } else {
+        notificationsEnabled = false;
+        localStorage.setItem('notifications_enabled', 'false');
+
+        const toggle = document.getElementById('notifToggle');
+        toggle.classList.remove('active');
+        showToast('Bildirimler kapatıldı', 'success');
+      }
+    }
+
+    function sendNewRecordNotification(plaka, surucu) {
+      if (notificationsEnabled && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification('🚛 Yeni Araç Kaydı', {
+          body: `${plaka} - ${surucu}\nYeni kayıt oluşturuldu!`,
+          icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&s',
+          badge: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&s',
+          tag: 'new-record',
+          requireInteraction: false
+        });
+      }
+    }
+
+    // Form işlemleri
+    function selectVehicleType(type) {
+      selectedVehicleType = type;
+
+      const kamyonBtn = document.getElementById('vehicleTypeKamyon');
+      const cekiciBtn = document.getElementById('vehicleTypeCekici');
+      const kamyonPlaka = document.getElementById('kamyonPlaka');
+      const cekiciPlaka = document.getElementById('cekiciPlaka');
+      const kamyonTireInfo = document.getElementById('kamyonTireInfo');
+      const cekiciTireInfo = document.getElementById('cekiciTireInfo');
+      const dorseTireInfo = document.getElementById('dorseTireInfo');
+
+      if (type === 'kamyon') {
+        kamyonBtn.style.background = 'linear-gradient(135deg, var(--accent-blue), var(--accent-orange))';
+        cekiciBtn.style.background = '#64748b';
+        kamyonPlaka.style.display = 'grid';
+        cekiciPlaka.style.display = 'none';
+        kamyonTireInfo.style.display = 'block';
+        cekiciTireInfo.style.display = 'none';
+        dorseTireInfo.style.display = 'none';
+      } else {
+        kamyonBtn.style.background = '#64748b';
+        cekiciBtn.style.background = 'linear-gradient(135deg, var(--accent-blue), var(--accent-orange))';
+        kamyonPlaka.style.display = 'none';
+        cekiciPlaka.style.display = 'grid';
+        kamyonTireInfo.style.display = 'none';
+        cekiciTireInfo.style.display = 'block';
+        dorseTireInfo.style.display = 'block';
+      }
+    }
+
+    // Birleştirilmiş lastik durumu fonksiyonu
+    function updateTireStatusUI(position, status) {
+      const yeniBtn = document.getElementById(`${position}_yeni`);
+      const cikmaBtn = document.getElementById(`${position}_cikma`);
+
+      if (!yeniBtn || !cikmaBtn) return;
+
+      // Reset
+      yeniBtn.style.background = '#64748b';
+      cikmaBtn.style.background = '#64748b';
+      yeniBtn.dataset.active = 'false';
+      cikmaBtn.dataset.active = 'false';
+
+      if (status === 'yeni') {
+        yeniBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        yeniBtn.dataset.active = 'true';
+      } else if (status === 'cikma') {
+        cikmaBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        cikmaBtn.dataset.active = 'true';
+      }
+    }
+
+    function selectTireStatus(pos, stat) { updateTireStatusUI(pos, stat); }
+    function selectCekiciTireStatus(pos, stat) { updateTireStatusUI(pos, stat); }
+    function selectDorseTireStatus(pos, stat) { updateTireStatusUI(pos, stat); }
+
+    function toggleDingil(header) {
+      const content = header.nextElementSibling;
+      const icon = header.querySelector('.toggle-icon');
+      if (content.style.display === 'none') {
+        content.style.display = 'grid';
+        if (icon) icon.textContent = '🔼';
+      } else {
+        content.style.display = 'none';
+        if (icon) icon.textContent = '🔽';
+      }
+    }
+
+    function toggleAllDingils(sectionId, show) {
+      const section = document.getElementById(sectionId);
+      const contents = section.querySelectorAll('.dingil-content');
+      const icons = section.querySelectorAll('.toggle-icon');
+      contents.forEach(content => {
+        content.style.display = show ? 'grid' : 'none';
+      });
+      icons.forEach(icon => {
+        icon.textContent = show ? '🔼' : '🔽';
+      });
+    }
+
+    function getSelectedTireStatusValue(position) {
+      const yeniBtn = document.getElementById(`${position}_yeni`);
+      if (yeniBtn && yeniBtn.dataset.active === 'true') return 'YENİ';
+
+      const cikmaBtn = document.getElementById(`${position}_cikma`);
+      if (cikmaBtn && cikmaBtn.dataset.active === 'true') return 'ÇIKMA';
+
+      return '';
+    }
+
+    function getSelectedTireStatus(pos) { return getSelectedTireStatusValue(pos); }
+    function getSelectedCekiciTireStatus(pos) { return getSelectedTireStatusValue(pos); }
+    function getSelectedDorseTireStatus(pos) { return getSelectedTireStatusValue(pos); }
+
+    // Form kaydetme
+    function saveForm() {
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = '⏳ Kaydediliyor...';
+
+      // 1. VERİ TOPLAMA
+      let plaka = '';
+      if (selectedVehicleType === 'kamyon') {
+        plaka = (document.getElementById('plaka1').value || '').trim();
+      } else {
+        const cekici = (document.getElementById('plakaCekici').value || '').trim();
+        const dorse = (document.getElementById('plakaDorse').value || '').trim();
+        plaka = cekici && dorse ? `${cekici} / ${dorse}` : (cekici || dorse);
+      }
+
+      const surucuAdi = (document.getElementById('surucuAdi').value || '').trim();
+      const tarih = (document.getElementById('tarih').value || '').trim();
+
+      // 2. ZORUNLU ALAN KONTROLÜ
+      if (!surucuAdi) {
+        showToast('❌ Lütfen sürücü adı girin!', 'error');
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Kaydet';
+        return;
+      }
+
+      if (!plaka) {
+        showToast('❌ Lütfen plaka bilgisi girin!', 'error');
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Kaydet';
+        return;
+      }
+
+      if (!tarih) {
+        showToast('❌ Lütfen tarih seçin!', 'error');
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Kaydet';
+        return;
+      }
+
+      // 3. DEĞER ALMA FONKSİYONLARI
+      const getValue = (id) => {
+        const el = document.getElementById(id);
+        return el ? (el.value || '').trim() : '';
+      };
+
+      const getNumber = (id) => {
+        const el = document.getElementById(id);
+        if (!el || !el.value) return 0;
+        const num = parseFloat(el.value);
+        return isNaN(num) ? 0 : num;
+      };
+
+      const canvas = document.getElementById('signatureCanvas');
+      const signatureData = canvas ? canvas.toDataURL() : '';
+
+      // 4. VERİ OBJESİ OLUŞTURMA
+      const vehicleData = {
+        __backendId: 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        user_email: savedEmail, // Kaydı oluşturan kullanıcı
+        surucu_adi: surucuAdi,
+        plaka: plaka,
+        arac_tipi: selectedVehicleType,
+        tarih: tarih,
+        notlar: getValue('notlar'),
+        toplam_fiyat: getNumber('toplamFiyat'),
+        imza: signatureData,
+        fotograflar: JSON.stringify([]),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      // 5. LASTİK BİLGİLERİNİ EKLEME
+      if (selectedVehicleType === 'kamyon') {
+        const positions = [
+          'kamyon_sol_on', 'kamyon_sag_on',
+          'kamyon_sol_orta_dis', 'kamyon_sol_orta_ic', 'kamyon_sag_orta_ic', 'kamyon_sag_orta_dis',
+          'kamyon_sol_arka_dis', 'kamyon_sol_arka_ic', 'kamyon_sag_arka_ic', 'kamyon_sag_arka_dis'
+        ];
+
+        positions.forEach(pos => {
+          vehicleData[`${pos}_durum`] = getSelectedTireStatus(pos);
+          vehicleData[`${pos}_marka`] = getValue(`${pos}_marka`);
+          vehicleData[`${pos}_km`] = getNumber(`${pos}_km`);
+          vehicleData[`${pos}_tarih`] = getValue(`${pos}_tarih`);
+          vehicleData[`${pos}_ebat`] = getValue(`${pos}_ebat`);
+          vehicleData[`${pos}_seri`] = getValue(`${pos}_seri`);
+          vehicleData[`${pos}_sensor`] = getValue(`${pos}_sensor`);
+        });
+
+      } else if (selectedVehicleType === 'cekici') {
+        const positions = [
+          'cekici_sol_on', 'cekici_sag_on',
+          'cekici_sol_dis', 'cekici_sol_ic', 'cekici_sag_ic', 'cekici_sag_dis',
+          'dorse_1_sol', 'dorse_1_sag',
+          'dorse_2_sol', 'dorse_2_sag',
+          'dorse_3_sol', 'dorse_3_sag'
+        ];
+
+        positions.forEach(pos => {
+          vehicleData[`${pos}_durum`] = getSelectedTireStatus(pos);
+          vehicleData[`${pos}_marka`] = getValue(`${pos}_marka`);
+          vehicleData[`${pos}_km`] = getNumber(`${pos}_km`);
+          vehicleData[`${pos}_tarih`] = getValue(`${pos}_tarih`);
+          vehicleData[`${pos}_ebat`] = getValue(`${pos}_ebat`);
+          vehicleData[`${pos}_seri`] = getValue(`${pos}_seri`);
+          vehicleData[`${pos}_sensor`] = getValue(`${pos}_sensor`);
+        });
+      }
+
+      // 6. KAYIT İŞLEMİ
+      let existingRecords = [];
+      try {
+        const stored = localStorage.getItem('vehicle_records');
+        if (stored) {
+          existingRecords = JSON.parse(stored);
+        }
+      } catch (e) {
+        existingRecords = [];
+      }
+
+      existingRecords.push(vehicleData);
+
+      try {
+        localStorage.setItem('vehicle_records', JSON.stringify(existingRecords));
+
+        records = existingRecords;
+
+        if (typeof forceSyncAll === 'function') forceSyncAll(); // Anında senkronizasyon
+        currentRecordCount = existingRecords.length;
+        renderHistory(existingRecords);
+        renderVehicles(existingRecords);
+
+        showToast('✅ Kayıt başarıyla tamamlandı!', 'success');
+        sendNewRecordNotification(plaka, surucuAdi);
+        clearForm();
+
+        setTimeout(() => {
+          showSection('vehicles');
+        }, 1000);
+      } catch (e) {
+        showToast('❌ Kayıt hatası: ' + e.message, 'error');
+      }
+
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💾 Kaydet';
+    }
+
+    // Form temizleme
+    function clearForm() {
+      // Tüm inputları sıfırla
+      const section = document.getElementById('newRecordSection');
+      if (!section) return;
+
+      const inputs = section.querySelectorAll('input, textarea, select');
+      inputs.forEach(input => {
+        if (input.type === 'file') return;
+        if (input.id === 'tarih') {
+          input.value = new Date().toISOString().split('T')[0];
+        } else {
+          input.value = '';
+        }
+      });
+
+      // Buton stillerini sıfırla
+      const buttons = section.querySelectorAll('button[id$="_yeni"], button[id$="_cikma"]');
+      buttons.forEach(btn => {
+        btn.style.background = '#64748b';
+        btn.dataset.active = 'false';
+      });
+
+      // İmza temizle
+      clearSignature();
+
+      // Varsayılan araç tipi
+      selectVehicleType('kamyon');
+    }
+
+    // Raporları Oluştur
+    function renderReports() {
+      // Verileri işle
+      const reportData = {};
+      let grandTotalCost = 0;
+      let grandTotalSensors = 0;
+
+      records.forEach(record => {
+        const plaka = record.plaka;
+        if (!reportData[plaka]) {
+          reportData[plaka] = {
+            plaka: plaka,
+            type: record.arac_tipi,
+            count: 0,
+            sensors: 0,
+            cost: 0,
+            lastDate: record.created_at
+          };
+        }
+
+        // Tarih güncelle
+        if (new Date(record.created_at) > new Date(reportData[plaka].lastDate)) {
+          reportData[plaka].lastDate = record.created_at;
+        }
+
+        reportData[plaka].count++;
+
+        // Maliyet
+        const cost = parseFloat(record.toplam_fiyat) || 0;
+        reportData[plaka].cost += cost;
+        grandTotalCost += cost;
+
+        // Sensör Sayısı
+        // record içindeki tüm key'leri dön, sonu '_sensor' ile biten ve dolu olanları say
+        Object.keys(record).forEach(key => {
+          if (key.endsWith('_sensor') && record[key] && record[key].trim() !== '') {
+            reportData[plaka].sensors++;
+            grandTotalSensors++;
+          }
+        });
+      });
+
+      // UI Güncelle - Özet
+      const costEl = document.getElementById('totalCost');
+      if (costEl) costEl.textContent = grandTotalCost.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+
+      const sensorEl = document.getElementById('totalSensors');
+      if (sensorEl) sensorEl.textContent = grandTotalSensors;
+
+      const vehicleEl = document.getElementById('totalVehiclesReport');
+      if (vehicleEl) vehicleEl.textContent = Object.keys(reportData).length;
+
+      // UI Güncelle - Tablo
+      const tbody = document.getElementById('reportsTableBody');
+      if (!tbody) return;
+
+      if (Object.keys(reportData).length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Henüz veri bulunamadı</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = Object.values(reportData).map(item => `
+        <tr style="background: var(--bg-primary); border-radius: 8px;">
+          <td class="p-3"><strong>${item.plaka}</strong></td>
+          <td class="p-3">${item.type === 'kamyon' ? 'Kamyon' : 'Çekici'}</td>
+          <td class="p-3 text-center">${item.count}</td>
+          <td class="p-3 text-center font-bold" style="color: var(--accent-blue)">${item.sensors}</td>
+          <td class="p-3 font-bold" style="color: var(--accent-orange)">${item.cost.toLocaleString('tr-TR')} ₺</td>
+          <td class="p-3 text-sm" style="color: var(--text-secondary)">${new Date(item.lastDate).toLocaleDateString('tr-TR')}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Toast bildirimi
+    function showToast(message, type) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    // Veri yönetimi
+    const dataHandler = {
+      onDataChanged(data) {
+        records = data;
+        currentRecordCount = data.length;
+        console.log('📊 Kayıt sayısı:', currentRecordCount);
+        renderHistory(data);
+        renderVehicles(data);
+      }
+    };
+
+    // Geçmiş kayıtları listele
+    function renderHistory(data) {
+      const container = document.getElementById('historyList');
+
+      // YETKİ KONTROLÜ
+      const isAdmin = (savedEmail === 'mustafa@akkoc');
+      let filteredData = data;
+
+      if (!isAdmin) {
+        // Admin değilse bile herkes görebilsin (Kullanıcı talebi)
+        filteredData = data;
+      }
+
+      if (filteredData.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px">Görüntülenecek kayıt yok</p>';
+        return;
+      }
+
+      const sortedData = [...filteredData].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      container.innerHTML = sortedData.map(record => {
+        const date = new Date(record.created_at);
+        const dateStr = date.toLocaleDateString('tr-TR');
+        const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+        // Bu kayda ait fotoğraf sayısını al
+        let photoCount = 0;
+        try {
+          const stored = localStorage.getItem('record_photos');
+          if (stored) {
+            const recordPhotos = JSON.parse(stored);
+            if (recordPhotos[record.__backendId] && Array.isArray(recordPhotos[record.__backendId])) {
+              photoCount = recordPhotos[record.__backendId].length;
+            }
+          }
+        } catch (e) {
+          photoCount = 0;
+        }
+
+        return `
+          <div class="record-card" onclick="showRecordDetail('${record.__backendId}')" style="cursor: pointer;">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <span style="font-size: 24px">${record.arac_tipi === 'kamyon' ? '🚛' : '🚚'}</span>
+                  <div>
+                    <div class="font-bold text-lg">${record.plaka}</div>
+                    <div class="text-sm" style="color: var(--text-secondary)">${record.surucu_adi}</div>
+                  </div>
+                </div>
+                <div class="flex gap-4 text-sm" style="color: var(--text-secondary)">
+                  <span>📅 ${dateStr}</span>
+                  <span>⏰ ${timeStr}</span>
+                  ${record.toplam_fiyat && record.toplam_fiyat !== 0 ? `<span>💰 ${record.toplam_fiyat} ₺</span>` : ''}
+                  ${photoCount > 0 ? `<span>📸 ${photoCount} fotoğraf</span>` : ''}
+                </div>
+              </div>
+              <div style="font-size: 24px; color: var(--accent-orange)">→</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Araç durumu (Aktif/Pasif) yönetimi
+    function getVehicleStatus(plaka) {
+      try {
+        const statuses = JSON.parse(localStorage.getItem('vehicle_statuses') || '{}');
+        return statuses[plaka] || 'active'; // Varsayılan aktif
+      } catch (e) {
+        return 'active';
+      }
+    }
+
+    function toggleVehicleStatus(plaka, event) {
+      if (event) event.stopPropagation();
+
+      try {
+        const statuses = JSON.parse(localStorage.getItem('vehicle_statuses') || '{}');
+        const currentStatus = statuses[plaka] || 'active';
+        statuses[plaka] = currentStatus === 'active' ? 'passive' : 'active';
+        localStorage.setItem('vehicle_statuses', JSON.stringify(statuses));
+        localStorage.setItem('vehicle_statuses_updated', new Date().toISOString());
+
+        showToast(`Araç durumu güncellendi: ${statuses[plaka] === 'active' ? 'Aktif' : 'Pasif'}`, 'success');
+        renderVehicles(records);
+        if (typeof forceSyncAll === 'function') forceSyncAll(); // Anında senkronizasyon
+      } catch (e) {
+        showToast('Durum güncellenemedi', 'error');
+      }
+    }
+
+    // Araçları listele (Gelişmiş)
+    function renderVehicles(data) {
+      const container = document.getElementById('vehiclesList');
+      const searchTerm = document.getElementById('vehicleSearch').value.toLowerCase().trim();
+      const filterValue = document.getElementById('vehicleFilter').value;
+
+      // YETKİ KONTROLÜ
+      const isAdmin = (savedEmail === 'mustafa@akkoc');
+      let authorizedData = data;
+
+      // Admin değilse bile diğer araçları görebilmeli, sadece silme yetkisi kısıtlı kalır
+      authorizedData = data;
+
+      const uniquePlakas = [...new Set(authorizedData.map(r => r.plaka).filter(p => p))];
+
+      if (uniquePlakas.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px">Görüntülenecek araç yok</p>';
+        return;
+      }
+
+      // Filtreleme
+      const filteredPlakas = uniquePlakas.filter(plaka => {
+        // Arama filtresi
+        if (searchTerm && !plaka.toLowerCase().includes(searchTerm)) {
+          return false;
+        }
+
+        // Durum filtresi
+        const status = getVehicleStatus(plaka);
+        if (filterValue === 'active' && status !== 'active') return false;
+        if (filterValue === 'passive' && status !== 'passive') return false;
+
+        return true;
+      });
+
+      if (filteredPlakas.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px">Aradığınız kriterlere uygun araç bulunamadı.</p>';
+        return;
+      }
+
+      container.innerHTML = filteredPlakas.map(plaka => {
+        // Araç detayında da sadece yetkili olduğu kayıtları kullanmalı
+        const vehicleRecords = authorizedData.filter(r => r.plaka === plaka);
+        const sortedRecords = vehicleRecords.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const lastRecord = sortedRecords[0];
+        const aracTipi = lastRecord.arac_tipi;
+        const status = getVehicleStatus(plaka);
+        const isActive = status === 'active';
+
+        const lastDate = new Date(lastRecord.created_at).toLocaleDateString('tr-TR');
+        const recordCount = vehicleRecords.length;
+
+        // Fotoğraf sayısı
+        let photoCount = 0;
+        try {
+          const stored = localStorage.getItem('vehicle_photos');
+          if (stored) {
+            const vehiclePhotos = JSON.parse(stored);
+            if (vehiclePhotos[plaka] && Array.isArray(vehiclePhotos[plaka])) {
+              photoCount = vehiclePhotos[plaka].length;
+            }
+          }
+        } catch (e) { }
+
+        return `
+          <div class="record-card ${isActive ? '' : 'opacity-75'}" style="border-left: 5px solid ${isActive ? '#10b981' : '#ef4444'}; position: relative; padding: 20px;" onclick="showVehicleDetail('${plaka}')">
+            
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              
+              <!-- ARAÇ ANA BİLGİ -->
+              <div class="flex items-center gap-4 min-w-[200px]">
+                <div class="relative">
+                    <span style="font-size: 50px">${aracTipi === 'kamyon' ? '🚛' : '🚚'}</span>
+                    <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-white ${isActive ? 'bg-green-500' : 'bg-red-500'}"></span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <h3 class="font-bold text-2xl uppercase tracking-tight" style="color: var(--text-primary)">${plaka}</h3>
+                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                        ${isActive ? 'AKTİF' : 'PASİF'}
+                    </span>
+                  </div>
+                  <div class="text-sm font-semibold" style="color: var(--accent-blue)">
+                    ${lastRecord.arac_tipi === 'kamyon' ? 'KAMYON' : 'ÇEKİCİ + DORSE'}
+                  </div>
+                </div>
+              </div>
+
+              <!-- DETAYLAR IZGARASI -->
+              <div class="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4 px-2 lg:px-8 w-full">
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-gray-500 uppercase font-bold mb-1">Son Sürücü</span>
+                    <span class="font-bold text-sm truncate" style="color: var(--text-primary)">${lastRecord.surucu_adi}</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-gray-500 uppercase font-bold mb-1">Son İşlem</span>
+                    <span class="font-bold text-sm" style="color: var(--text-primary)">${lastDate}</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-gray-500 uppercase font-bold mb-1">Toplam İşlem</span>
+                    <span class="font-bold text-sm" style="color: var(--text-primary)">${recordCount} Kayıt</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-gray-500 uppercase font-bold mb-1">Fotoğraflar</span>
+                    <span class="font-bold text-sm" style="color: var(--text-primary)">${photoCount} Adet</span>
+                </div>
+              </div>
+
+              <!-- AKSİYONLAR VE OK -->
+              <div class="flex items-center gap-3 w-full lg:w-auto justify-end border-t lg:border-t-0 pt-3 lg:pt-0" style="border-color: var(--border-color)">
+                ${isAdmin ? `
+                <button onclick="deleteVehicleToTrash('${plaka}', event)" class="p-2.5 rounded-lg hover:bg-red-50 text-red-600 border border-transparent hover:border-red-100 transition-all" title="Sil">
+                    🗑️
+                </button>
+                ` : ''}
+                <button onclick="toggleVehicleStatus('${plaka}', event)" class="p-2.5 rounded-lg hover:bg-gray-100 text-gray-400 border border-transparent hover:border-gray-200 transition-all" title="${isActive ? 'Pasife Al' : 'Aktife Al'}">
+                    ${isActive ? '❌' : '✅'}
+                </button>
+                <div class="text-2xl transition-transform group-hover:translate-x-1" style="color: var(--accent-orange)">→</div>
+              </div>
+
+            </div>
+            
+            ${isAdmin ? `
+            <div class="mt-2 pt-2 border-t border-dashed text-[10px]" style="border-color: var(--border-color); color: var(--text-secondary)">
+              👤 Kaydeden: <span class="font-semibold">${lastRecord.user_email || 'Bilinmiyor'}</span>
+            </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Fotoğraf işlemleri
+    function openCameraForVehicle(plaka) {
+      currentPhotoPlaka = plaka;
+      document.getElementById('cameraInput').click();
+    }
+
+    function openGalleryForVehicle(plaka) {
+      currentPhotoPlaka = plaka;
+      document.getElementById('fileInput').click();
+    }
+
+    // Dosya işleme
+    document.getElementById('fileInput').addEventListener('change', async function (e) {
+      if (e.target.files && e.target.files[0]) {
+        await handlePhotoFile(e.target.files[0]);
+      }
+      e.target.value = '';
+    });
+
+    document.getElementById('cameraInput').addEventListener('change', async function (e) {
+      if (e.target.files && e.target.files[0]) {
+        await handlePhotoFile(e.target.files[0]);
+      }
+      e.target.value = '';
+    });
+
+    async function handlePhotoFile(file) {
+      if (!currentPhotoPlaka) {
+        showToast('❌ Plaka bilgisi bulunamadı', 'error');
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        showToast('❌ Lütfen bir resim dosyası seçin', 'error');
+        return;
+      }
+
+      showToast('📸 Fotoğraf işleniyor...', 'success');
+
+      try {
+        const reader = new FileReader();
+        reader.onload = async function (event) {
+          const img = new Image();
+          img.onload = function () {
+            // Resize logic
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const max_size = 800; // Max dimension
+
+            if (width > height) {
+              if (width > max_size) {
+                height *= max_size / width;
+                width = max_size;
+              }
+            } else {
+              if (height > max_size) {
+                width *= max_size / height;
+                height = max_size;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Get compressed data
+            const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+
+            const newPhoto = {
+              id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+              url: compressedData,
+              tarih: new Date().toISOString(),
+              plaka: currentPhotoPlaka
+            };
+
+            // Plakaya göre fotoğrafları localStorage'da sakla
+            let vehiclePhotos = {};
+            try {
+              const stored = localStorage.getItem('vehicle_photos');
+              if (stored) {
+                vehiclePhotos = JSON.parse(stored);
+              }
+            } catch (e) {
+              vehiclePhotos = {};
+            }
+
+            if (!vehiclePhotos[currentPhotoPlaka]) {
+              vehiclePhotos[currentPhotoPlaka] = [];
+            }
+
+            vehiclePhotos[currentPhotoPlaka].push(newPhoto);
+            localStorage.setItem('vehicle_photos', JSON.stringify(vehiclePhotos));
+            localStorage.setItem('vehicle_photos_updated', new Date().toISOString());
+
+            showToast('✅ Fotoğraf başarıyla eklendi!', 'success');
+
+            if (!document.getElementById('vehicleDetailModal').classList.contains('hidden')) {
+              setTimeout(() => {
+                showVehicleDetail(currentPhotoPlaka);
+              }, 500);
+            }
+          };
+          img.src = event.target.result;
+        };
+
+        reader.onerror = function () {
+          showToast('❌ Fotoğraf yüklenirken hata oluştu', 'error');
+        };
+
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('❌ Fotoğraf işleme hatası:', error);
+        showToast('❌ Fotoğraf işlenirken hata oluştu', 'error');
+      }
+    }
+
+    async function deletePhoto(plaka, photoId) {
+      try {
+        // Plakaya özel fotoğrafları localStorage'dan al
+        let vehiclePhotos = {};
+        try {
+          const stored = localStorage.getItem('vehicle_photos');
+          if (stored) {
+            vehiclePhotos = JSON.parse(stored);
+          }
+        } catch (e) {
+          vehiclePhotos = {};
+        }
+
+        // Bu plakaya ait fotoğrafları filtrele
+        if (vehiclePhotos[plaka] && Array.isArray(vehiclePhotos[plaka])) {
+          vehiclePhotos[plaka] = vehiclePhotos[plaka].filter(p => p.id !== photoId);
+
+          // localStorage'a kaydet
+          localStorage.setItem('vehicle_photos', JSON.stringify(vehiclePhotos));
+          localStorage.setItem('vehicle_photos_updated', new Date().toISOString());
+
+          showToast('✅ Fotoğraf silindi', 'success');
+
+          setTimeout(() => {
+            showVehicleDetail(plaka);
+          }, 300);
+        } else {
+          showToast('❌ Fotoğraf bulunamadı', 'error');
+        }
+      } catch (error) {
+        console.error('❌ Fotoğraf silme hatası:', error);
+        showToast('❌ Fotoğraf silinirken hata oluştu', 'error');
+      }
+    }
+
+    function showPhotoPreview(photoUrl) {
+      document.getElementById('photoPreviewImage').src = photoUrl;
+      document.getElementById('photoPreviewModal').classList.remove('hidden');
+    }
+
+    function closePhotoPreview() {
+      document.getElementById('photoPreviewModal').classList.add('hidden');
+    }
+
+    // Araç detayı göster
+    // Araç detayı göster
+    function showVehicleDetail(plaka) {
+      // YETKİ KONTROLÜ
+      const isAdmin = (savedEmail === 'mustafa@akkoc');
+      let vehicleRecords = records.filter(r => r.plaka === plaka);
+
+      if (!isAdmin) {
+        // vehicleRecords = vehicleRecords.filter(r => r.user_email === savedEmail);
+        // Tüm kayıtlar görünsün
+      }
+
+      if (vehicleRecords.length === 0) {
+        showToast('Bu araca ait görüntüleme yetkiniz yok.', 'error');
+        return;
+      }
+
+      const sortedRecords = vehicleRecords.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      const lastRecord = sortedRecords[0];
+
+      const modal = document.getElementById('vehicleDetailModal');
+      const content = document.getElementById('vehicleDetailContent');
+      document.getElementById('detailPlaka').textContent = plaka;
+
+      // Fotoğrafları al
+      let allPhotos = [];
+      try {
+        const stored = localStorage.getItem('vehicle_photos');
+        if (stored) {
+          const vehiclePhotos = JSON.parse(stored);
+          if (vehiclePhotos[plaka] && Array.isArray(vehiclePhotos[plaka])) {
+            allPhotos = vehiclePhotos[plaka].filter(photo => photo.plaka === plaka);
+          }
+        }
+      } catch (e) { allPhotos = []; }
+
+      allPhotos.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
+
+      // --- HTML OLUŞTURMA ---
+      let html = `
+          <div class="mb-6">
+            <div class="flex items-center gap-4 mb-4 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-transparent border-l-8 border-blue-500 shadow-sm relative overflow-hidden">
+              <div class="absolute right-0 top-0 h-full w-32 bg-gradient-to-l from-white/40 to-transparent pointer-events-none"></div>
+              <span style="font-size: 64px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1))">${lastRecord.arac_tipi === 'kamyon' ? '🚛' : '🚚'}</span>
+              <div class="flex-1 z-10">
+                <div class="text-4xl font-extrabold flex flex-col sm:flex-row sm:items-baseline gap-2" style="color: var(--text-primary); letter-spacing: -1px;">
+                  ${plaka}
+                  <span class="text-lg font-medium text-gray-500 bg-white/60 px-3 py-1 rounded-full border border-gray-100 backdrop-blur-sm shadow-sm" style="font-family: monospace;">
+                    👤 ${lastRecord.surucu_adi}
+                  </span>
+                </div>
+                <div class="text-base font-bold uppercase tracking-wider mt-1 text-blue-600 bg-blue-50 inline-block px-2 py-0.5 rounded-md border border-blue-100 shadow-sm">
+                    ${lastRecord.arac_tipi === 'kamyon' ? 'KAMYON' : 'ÇEKİCİ + DORSE'}
+                </div>
+              </div>
+              <div class="text-right bg-gradient-to-br from-white to-gray-50 p-4 rounded-xl border border-gray-200 shadow-lg flex flex-col items-center justify-center min-w-[100px] z-10">
+                <div class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-red-500" style="color: var(--accent-orange)">${vehicleRecords.length}</div>
+                <div class="text-[9px] font-black uppercase text-gray-400 tracking-widest mt-1">Toplam Kayıt</div>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="p-4 bg-orange-50 border-2 border-orange-100 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] font-black text-orange-600 uppercase tracking-widest">Toplam Harcama</div>
+                        <div class="text-2xl font-black text-orange-900">${vehicleRecords.reduce((sum, r) => sum + (parseFloat(r.toplam_fiyat) || 0), 0).toLocaleString('tr-TR')} ₺</div>
+                    </div>
+                    <span class="text-3xl">💰</span>
+                </div>
+                <div class="p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Son İşlem Tarihi</div>
+                        <div class="text-2xl font-black text-blue-900">${new Date(lastRecord.created_at).toLocaleDateString('tr-TR')}</div>
+                    </div>
+                    <span class="text-3xl">📅</span>
+                </div>
+            </div>
+        </div>
+        
+        < !--Fotoğraf Bölümü-- >
+        <div class="form-card photo-section mb-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-semibold text-lg" style="color: var(--accent-orange)">📸 Araç Fotoğrafları (${allPhotos.length})</h3>
+            <div class="flex gap-2">
+                <button class="btn-primary" style="padding: 8px 16px; font-size: 12px;" onclick="openCameraForVehicle('${plaka}')">📷 Çek</button>
+                <button class="btn-primary" style="padding: 8px 16px; font-size: 12px; background: #64748b;" onclick="openGalleryForVehicle('${plaka}')">🖼️ Seç</button>
+            </div>
+          </div>
+          
+          ${allPhotos.length > 0 ? `
+            <div class="flex gap-4 overflow-x-auto pb-4" style="scroll-behavior: smooth;">
+              ${allPhotos.map(photo => `
+                <div class="relative flex-shrink-0" style="width: 120px; height: 120px;">
+                    <img src="${photo.url}" class="w-full h-full object-cover rounded-lg shadow-md cursor-pointer hover:opacity-90 transition" onclick="showPhotoPreview('${photo.url}')">
+                    <button class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-sm hover:scale-110 transition" onclick="deletePhoto('${plaka}', '${photo.id}')">×</button>
+                </div>
+              `).join('')}
+            </div>
+          ` : '<div class="text-center py-4 text-gray-400 text-sm">Henüz fotoğraf yok.</div>'}
+        </div>
+
+        <!--Geçmiş Kayıtlar Listesi-- >
+          <div class="space-y-6">
+            <h3 class="font-bold text-xl px-2 border-l-4 border-blue-500">📋 Geçmiş İşlem Kayıtları</h3>
+
+            ${sortedRecords.map((record, index) => {
+        const date = new Date(record.created_at).toLocaleDateString('tr-TR');
+        const time = new Date(record.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        const isExpanded = index === 0; // İlk kayıt açık olsun
+
+        // Bu kayıttaki dolu sensörleri ve işlemleri bul
+        let sensorCount = 0;
+        let tireChanges = 0;
+        let detailsHTML = '';
+
+        // Lastik pozisyonlarını tarama
+        const allKeys = Object.keys(record);
+        const positions = new Set();
+
+        allKeys.forEach(key => {
+          if (key.includes('_durum') || key.includes('_marka') || key.includes('_sensor')) {
+            // key formatı: kamyon_sol_on_durum -> position: kamyon_sol_on
+            const parts = key.split('_');
+            const prop = parts.pop(); // durum, marka, sensor vs.
+            const pos = parts.join('_');
+            positions.add(pos);
+          }
+        });
+
+        let gridItems = '';
+
+        positions.forEach(pos => {
+          const valDurum = record[pos + '_durum'];
+          const valMarka = record[pos + '_marka'];
+          const valSensor = record[pos + '_sensor'];
+          const valEbat = record[pos + '_ebat'];
+          const valSeri = record[pos + '_seri'];
+          const valKM = record[pos + '_km'];
+          const valTarih = record[pos + '_tarih'];
+
+          const hasData = (valDurum || (valMarka && valMarka.trim()) || (valSensor && valSensor.trim()) || (valEbat && valEbat.trim()) || (valSeri && valSeri.trim()) || valKM || valTarih);
+
+          if (hasData) {
+            tireChanges++;
+            if (valSensor && valSensor.trim()) sensorCount++;
+
+            let posName = pos.replace('kamyon_', '').replace('cekici_', '').replace('dorse_', '').replace(/_/g, ' ').toUpperCase();
+            let typeIcon = '🚚';
+            if (pos.startsWith('kamyon')) typeIcon = '🚛';
+            if (pos.startsWith('dorse')) { typeIcon = '🛒'; posName = 'DORSE ' + posName; }
+
+            gridItems += `
+                            <div class="p-6 bg-white rounded-2xl border-2 border-gray-100 shadow-sm transition-all hover:border-blue-400 hover:shadow-xl group">
+                                <div class="font-black text-xl mb-6 flex items-center gap-3 text-blue-700" style="letter-spacing: -0.5px">
+                                    <span class="text-2xl">◀️</span> 
+                                    <span class="uppercase">${posName}</span>
+                                </div>
+                                <div class="grid grid-cols-1 gap-5">
+                                    ${valDurum ? `
+                                      <div class="flex flex-col gap-1">
+                                        <span class="font-bold text-[10px] text-gray-400 uppercase tracking-widest">Durum</span> 
+                                        <div class="flex items-center gap-2">
+                                          <span class="px-3 py-1 rounded-lg text-sm font-black shadow-sm border ${valDurum === 'YENİ' ? 'bg-green-500 text-white border-green-600' : 'bg-orange-500 text-white border-orange-600'}">
+                                            ${valDurum}
+                                          </span>
+                                        </div>
+                                      </div>` : ''}
+                                    
+                                    ${valMarka ? `
+                                      <div class="flex flex-col gap-1">
+                                        <span class="font-bold text-xs text-gray-400 uppercase tracking-widest">Marka</span> 
+                                        <span class="text-xl font-black text-gray-900">${valMarka}</span>
+                                      </div>` : ''}
+
+                                    ${valKM ? `
+                                      <div class="flex flex-col gap-1">
+                                        <span class="font-bold text-xs text-gray-400 uppercase tracking-widest">KM</span> 
+                                        <span class="text-xl font-black text-gray-900">${Number(valKM).toLocaleString()} KM</span>
+                                      </div>` : ''}
+
+                                    ${valTarih ? `
+                                      <div class="flex flex-col gap-1">
+                                        <span class="font-bold text-xs text-gray-400 uppercase tracking-widest">Takılma Tarihi</span> 
+                                        <span class="text-xl font-black text-gray-900">${new Date(valTarih).toLocaleDateString('tr-TR')}</span>
+                                      </div>` : ''}
+
+                                    ${valEbat ? `
+                                      <div class="flex flex-col gap-1">
+                                        <span class="font-bold text-xs text-gray-400 uppercase tracking-widest">Ebat</span> 
+                                        <span class="text-xl font-black text-gray-900">${valEbat}</span>
+                                      </div>` : ''}
+
+                                    ${valSeri ? `
+                                      <div class="flex flex-col gap-1">
+                                        <span class="font-bold text-xs text-gray-400 uppercase tracking-widest">Seri No</span> 
+                                        <span class="text-xl font-black text-gray-900">${valSeri}</span>
+                                      </div>` : ''}
+
+                                    ${valSensor ? `
+                                      <div class="flex flex-col gap-2 p-4 bg-blue-600 rounded-2xl shadow-lg shadow-blue-200 mt-2">
+                                        <span class="font-bold text-[10px] text-blue-100 uppercase tracking-[0.2em]">Sensör</span> 
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-2xl">📡</span>
+                                            <span class="text-lg font-black text-white">${valSensor}</span>
+                                        </div>
+                                      </div>` : ''}
+                                </div>
+                            </div>
+                        `;
+          }
+        });
+
+        if (gridItems === '') {
+          gridItems = '<div class="col-span-full text-center text-gray-500 py-10 font-bold italic text-lg">Bu kayıtta lastik detayı girilmemiş.</div>';
+        }
+
+        return `
+                    <div class="bg-white rounded-3xl shadow-sm border-2 border-gray-100 overflow-hidden mb-6 transition-all hover:border-gray-300">
+                        <div class="bg-gradient-to-r from-gray-50 to-white p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-5 cursor-pointer" 
+                             onclick="toggleRecordDetails(this)">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="font-black text-2xl" style="color: var(--text-primary)">${record.surucu_adi}</span>
+                                    <span class="text-xs font-black uppercase tracking-widest bg-orange-100 text-orange-700 px-4 py-1.5 rounded-full border border-orange-200 shadow-sm">${date} - ${time}</span>
+                                </div>
+                                 <div class="text-xs font-black text-blue-600 uppercase tracking-tight mb-3 flex items-center gap-1">👤 <span class="opacity-70">KAYDEDEN:</span> ${record.user_email || 'Bilinmiyor'}</div>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-2 px-4 py-1.5 bg-green-50 rounded-xl border-2 border-green-100">
+                                      <span class="text-green-700 font-black text-sm">${tireChanges}</span>
+                                      <span class="text-xs font-black text-green-800 uppercase tracking-tighter">İŞLEM</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 px-4 py-1.5 bg-blue-50 rounded-xl border-2 border-blue-100">
+                                      <span class="text-blue-700 font-black text-sm">${sensorCount}</span>
+                                      <span class="text-xs font-black text-blue-800 uppercase tracking-tighter">SENSÖR</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right flex flex-col items-end">
+                                <div class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 opacity-80">TOPLAM TUTAR</div>
+                                <div class="font-black text-3xl" style="color: var(--accent-orange); letter-spacing: -1px;">${Number(record.toplam_fiyat || 0).toLocaleString()} ₺</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Detay İçeriği (Akordeon) -->
+                        <div class="details-content ${isExpanded ? '' : 'hidden'} border-t-2 border-gray-100">
+                            <div class="p-8 bg-gray-50/40">
+                                ${record.notlar ? `
+                                    <div class="mb-8 p-5 bg-yellow-50 border-l-8 border-yellow-400 rounded-r-2xl text-base shadow-sm">
+                                        <div class="text-xs font-black text-yellow-700 uppercase tracking-widest mb-2">📝 KAYIT NOTLARI</div>
+                                        <div class="text-gray-900 font-bold leading-relaxed italic">"${record.notlar}"</div>
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    ${gridItems}
+                                </div>
+
+                                ${record.imza ? `
+                                    <div class="mt-10 pt-8 border-t-2 border-dashed border-gray-200 flex flex-col items-center sm:items-start">
+                                        <div class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">🖊️ SÜRÜCÜ ONAY İMZASI</div>
+                                        <div class="bg-white p-4 rounded-2xl border-2 border-gray-200 shadow-md">
+                                          <img src="${record.imza}" class="max-h-[120px] object-contain mix-blend-multiply opacity-90" style="filter: contrast(1.3) brightness(0.9);">
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+      }).join('')}
+          </div>
+        `;
+
+      content.innerHTML = html;
+      modal.classList.remove('hidden');
+    }
+
+    // Akordeon aç/kapa
+    function toggleRecordDetails(headerElement) {
+      const content = headerElement.nextElementSibling;
+      content.classList.toggle('hidden');
+    }
+
+    function closeVehicleDetail(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('vehicleDetailModal').classList.add('hidden');
+    }
+
+    function showRecordDetail(backendId) {
+      const record = records.find(r => r.__backendId === backendId);
+      if (record) {
+        showVehicleDetail(record.plaka);
+      } else {
+        showToast('Kayıt bulunamadı', 'error');
+      }
+    }
+
+    // --- DELETE FUNCTIONALITY FIXED ---
+
+
+    // --- ÇÖP KUTUSU İŞLEMLERİ ---
+
+    function getDeletedRecords() {
+      try {
+        return JSON.parse(localStorage.getItem('deleted_vehicle_records') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveDeletedRecords(data) {
+      localStorage.setItem('deleted_vehicle_records', JSON.stringify(data));
+    }
+
+    // Aracı çöp kutusuna taşı
+    function deleteVehicleToTrash(plaka, event) {
+      if (event) event.stopPropagation();
+
+      if (!confirm(`${plaka} plakalı aracı ve tüm geçmişini silmek istediğinize emin misiniz ? (Çöp kutusundan geri yüklenebilir)`)) {
+        return;
+      }
+
+      // Aktif kayıtlardan bu plakaya ait olanları bul
+      const vehicleRecords = records.filter(r => r.plaka === plaka);
+      const otherRecords = records.filter(r => r.plaka !== plaka);
+
+      if (vehicleRecords.length === 0) return;
+
+      // Silinenlere ekle (Tarih damgasıyla)
+      const deletedData = getDeletedRecords();
+
+      // Silinen kayıt objesi
+      const deletedItem = {
+        plaka: plaka,
+        deleted_at: new Date().toISOString(),
+        deleted_by: savedEmail,
+        records: vehicleRecords
+      };
+
+      deletedData.push(deletedItem);
+      saveDeletedRecords(deletedData);
+
+      // Ana kayıtlardan sil
+      records = otherRecords;
+      localStorage.setItem('vehicle_records', JSON.stringify(records));
+
+      // UI güncelle
+      renderVehicles(records);
+      renderHistory(records);
+
+      if (typeof forceSyncAll === 'function') forceSyncAll(); // Anında senkronizasyon
+
+      showToast('🗑️ Araç çöp kutusuna taşındı', 'success');
+    }
+
+    // Çöp kutusunu listele
+    function renderTrash() {
+      const container = document.getElementById('trashList');
+      const deletedData = getDeletedRecords();
+
+      // Yetki (Sadece Admin görsün - Kullanıcı isteğine binaen sadece Admin yönetmeli)
+      // Ancak "sondenen silinenler çıksın" dediği için admin zorunluluğu koymuyoruz, 
+      // ama güvenli olan admindir. Kullanıcı "sadece ben göreyim" demediği için herkese açabiliriz 
+      // veya sadece silen kişiye. Basitlik için Admin yapalım.
+      const isAdmin = (savedEmail === 'mustafa@akkoc');
+
+      if (!isAdmin) {
+        container.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 40px">Bu alanı görüntüleme yetkiniz yok.</p>';
+        return;
+      }
+
+      if (deletedData.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px">Çöp kutusu boş, silinmiş araç yok.</p>';
+        return;
+      }
+
+      // Yeniden eskiye
+      deletedData.sort((a, b) => new Date(b.deleted_at) - new Date(a.deleted_at));
+
+      container.innerHTML = deletedData.map((item, index) => {
+        const delDate = new Date(item.deleted_at).toLocaleString('tr-TR');
+        const recordCount = item.records.length;
+        const mainType = item.records[0] ? (item.records[0].arac_tipi === 'kamyon' ? '🚛 Kamyon' : '🚚 Çekici') : 'Araç';
+
+        return `
+        <div class="record-card" style="border-left: 5px solid #ef4444; opacity: 0.9;">
+          <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <span style="font-size: 32px; filter: grayscale(100%);">🗑️</span>
+              <div>
+                <h3 class="font-bold text-lg text-gray-700">${item.plaka} <span class="text-xs font-normal text-red-500">(${mainType})</span></h3>
+                <div class="text-sm text-gray-500">
+                  Silinme: ${delDate}<br>
+                    Silen: ${item.deleted_by || 'Bilinmiyor'}<br>
+                      ${recordCount} Kayıt
+                    </div>
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <button onclick="restoreVehicle(${index})" class="btn-primary" style="padding: 8px 16px; background: #10b981; font-size: 13px;">
+                  ♻️ Geri Yükle
+                </button>
+                <button onclick="permanentDeleteVehicle(${index})" class="btn-primary" style="padding: 8px 16px; background: #991b1b; font-size: 13px;">
+                  🚫 Kalıcı Sil
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Geri Yükle
+    function restoreVehicle(index) {
+      const deletedData = getDeletedRecords();
+      const itemToRestore = deletedData[index];
+
+      if (!itemToRestore) return;
+
+      // Kayıtları ana listeye ekle
+      records = [...records, ...itemToRestore.records];
+
+      // Çöp kutusundan çıkar
+      deletedData.splice(index, 1);
+
+      // Kaydet
+      localStorage.setItem('vehicle_records', JSON.stringify(records));
+      saveDeletedRecords(deletedData);
+
+      renderTrash();
+      renderVehicles(records); // Arka planda güncelle
+
+      if (typeof forceSyncAll === 'function') forceSyncAll(); // Anında senkronizasyon
+
+      showToast('♻️ Araç ve kayıtları geri yüklendi', 'success');
+    }
+
+    // Kalıcı Sil
+    function permanentDeleteVehicle(index) {
+      if (!confirm('🚫 BU İŞLEM GERİ ALINAMAZ!\n\nAracı ve tüm verilerini kalıcı olarak silmek istediğinize emin misiniz?')) {
+        return;
+      }
+
+      const deletedData = getDeletedRecords();
+      deletedData.splice(index, 1);
+      saveDeletedRecords(deletedData);
+
+      renderTrash();
+
+      if (typeof forceSyncAll === 'function') forceSyncAll(); // Anında senkronizasyon
+
+      showToast('Araç kalıcı olarak silindi', 'success');
+    }
+
+    // İmza fonksiyonları
+    let isDrawing = false;
+    let signatureCanvas, signatureCtx;
+
+    function initSignature() {
+      signatureCanvas = document.getElementById('signatureCanvas');
+      if (!signatureCanvas) return;
+
+      signatureCtx = signatureCanvas.getContext('2d');
+      signatureCtx.strokeStyle = '#0066cc';
+      signatureCtx.lineWidth = 2;
+      signatureCtx.lineCap = 'round';
+      signatureCtx.lineJoin = 'round';
+
+      signatureCanvas.addEventListener('mousedown', startDrawing);
+      signatureCanvas.addEventListener('mousemove', draw);
+      signatureCanvas.addEventListener('mouseup', stopDrawing);
+      signatureCanvas.addEventListener('mouseout', stopDrawing);
+
+      signatureCanvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = signatureCanvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        startDrawing({ offsetX: x, offsetY: y });
+      });
+
+      signatureCanvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = signatureCanvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        draw({ offsetX: x, offsetY: y });
+      });
+
+      signatureCanvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        stopDrawing();
+      });
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      document.getElementById('signatureHint').style.display = 'none';
+      signatureCtx.beginPath();
+      signatureCtx.moveTo(e.offsetX, e.offsetY);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      signatureCtx.lineTo(e.offsetX, e.offsetY);
+      signatureCtx.stroke();
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+      signatureCtx.closePath();
+    }
+
+    function clearSignature() {
+      if (!signatureCanvas || !signatureCtx) return;
+      signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+      document.getElementById('signatureHint').style.display = 'block';
+      showToast('İmza temizlendi', 'success');
+    }
+
+    // Başlatma
+    async function init() {
+      console.log('🚀 Sistem başlatılıyor...');
+
+      setTheme(currentTheme);
+      loadProfile();
+      updateLogos();
+
+      if (notificationsEnabled) {
+        document.getElementById('notifToggle').classList.add('active');
+      }
+
+      // Tarih otomatik ayarla
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('tarih').value = today;
+
+      selectVehicleType('kamyon');
+      initSignature();
+
+      // LocalStorage'dan veri yükle
+      loadFromLocalStorage();
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const stored = localStorage.getItem('vehicle_records');
+        if (stored) {
+          const loadedRecords = JSON.parse(stored);
+          records = loadedRecords;
+          currentRecordCount = loadedRecords.length;
+          renderHistory(loadedRecords);
+          renderVehicles(loadedRecords);
+          console.log('✅ LocalStorage\'dan', loadedRecords.length, 'kayıt yüklendi');
+        }
+      } catch (e) {
+        console.error('❌ LocalStorage yükleme hatası:', e);
+      }
+    }
+
+    window.addEventListener('load', init);
+  </script>
+  <!-- PWA Service Worker ve Supabase Client -->
+  <script src="./supabase-client.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('✅ Service Worker kayıt edildi:', reg.scope))
+          .catch(err => console.log('❌ Service Worker hatası:', err));
+      });
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "Akkoç Lojistik - Dijital Lastik Formu",
+  "short_name": "Akkoç Lojistik",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&s",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuBuZbgz27YtowyonVoRRXxf7LluI6VRbZLw&s",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

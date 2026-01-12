@@ -1,0 +1,96 @@
+/* Akkoç Lojistik - Mobile Optimizations */
+
+/* Genel responsive ayarları */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+    overflow-x: hidden;
+  }
+
+  /* Input ve Butonlar mobilde daha büyük */
+  input,
+  select,
+  button,
+  .btn-primary {
+    min-height: 48px;
+    font-size: 16px;
+    /* iOS zoom engellemek için */
+  }
+
+  /* Modal mobilde tam ekran */
+  .modal-content {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: 0;
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  /* Sidebar mobilde tam ekran kaplar */
+  .sidebar {
+    width: 85%;
+    max-width: 320px;
+  }
+
+  /* Tablolar yatay kaydırmalı */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Kart görünümleri */
+  .record-card {
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  /* Grid yapıları tek sütuna düşer */
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Lastik seçim alanları (Grid exception) */
+  .tire-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px;
+  }
+
+  /* Başlıklar küçülür */
+  h1,
+  .text-3xl {
+    font-size: 1.5rem !important;
+  }
+
+  h2,
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* Dokunmatik ekran optimizasyonları */
+@media (hover: none) {
+  .hover\:bg-gray-100:hover {
+    background-color: transparent;
+    /* Hover efektlerini kaldır */
+  }
+
+  /* Aktif (basılı) durum stilleri */
+  .btn-primary:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+/* iOS Safe Area */
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .sidebar {
+    padding-top: calc(20px + env(safe-area-inset-top));
+  }
+}
